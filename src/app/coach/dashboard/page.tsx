@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { logout } from "@/app/logout/actions";
 
 const stats = [
   { label: "Active clients", value: "12", color: "text-lime-400" },
@@ -42,6 +43,14 @@ export default function CoachDashboard() {
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold">
             SH
           </div>
+            <form action={logout}>
+                <button
+                type="submit"
+                className="min-h-11 rounded-full border border-white/15 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-95"
+                >
+                Log out
+                </button>
+            </form>
         </header>
 
         <section className="mt-12">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { logout } from "@/app/logout/actions";
 
 const exercises = [
   {
@@ -39,9 +40,21 @@ export default function ClientTodayPage() {
             9000
           </Link>
 
-          <div className="rounded-full border border-white/10 bg-zinc-900 px-4 py-2 text-sm text-zinc-300">
-            Online
-          </div>
+          <div
+            role="status"
+            className="flex items-center gap-2 text-xs font-medium text-zinc-500"
+            >
+            <span className="h-2 w-2 rounded-full bg-lime-400" />
+            <span>Offline mode - tap to sync</span>
+        </div>
+              <form action={logout}>
+                <button
+                    type="submit"
+                    className="min-h-11 rounded-full border border-white/15 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-95"
+                >
+                    Log out
+                </button>
+                </form>
         </header>
 
         <section className="mt-12">

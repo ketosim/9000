@@ -25,13 +25,29 @@ export async function login(formData: FormData) {
 
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const { data: authData, error: authError } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) {
+  if (authError || !authData.user) {
     redirect("/login?error=Invalid username or password");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", authData.user.id)
+    .single();
+
+  if (profileError || !profile) {
+    await supabase.auth.signOut();
+    redirect("/login?error=Your profile could not be loaded");
+  }
+
+  if (profile.role === "coach") {
+    redirect("/coach/dashboard");
   }
 
   redirect("/client/today");
