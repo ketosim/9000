@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Oxanium,  Chakra_Petch } from "next/font/google";
+import { Geist, Geist_Mono,  Chakra_Petch } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,11 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const oxanium = Oxanium({
-  variable: "--font-oxanium",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
+
 
 const chakraPetch = Chakra_Petch({
   variable: "--font-chakra-petch",
