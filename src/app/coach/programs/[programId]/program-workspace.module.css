@@ -1,0 +1,41 @@
+.workspace {
+  container-type: inline-size;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.workoutCards {
+  display: none;
+}
+
+.workoutPicker {
+  display: block;
+}
+
+.formStack form fieldset {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.formStack form fieldset > * {
+  grid-column: 1 / -1;
+}
+
+/* Uses available content width, including the space taken by the coach nav. */
+@container (min-width: 46rem) {
+  .columns {
+    grid-template-columns: 13rem minmax(0, 1fr);
+  }
+
+  .workoutCards {
+    display: block;
+  }
+
+  .workoutPicker {
+    display: none;
+  }
+}

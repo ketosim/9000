@@ -1,14 +1,13 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { CoachShell } from "@/components/navigation/coach-shell";
 
 type CoachLayoutProps = {
   children: ReactNode;
 };
 
-export default async function CoachLayout({
-  children,
-}: CoachLayoutProps) {
+export default async function CoachLayout({ children }: CoachLayoutProps) {
   const supabase = await createClient();
 
   const {
@@ -33,5 +32,5 @@ export default async function CoachLayout({
     redirect("/client/today");
   }
 
-  return children;
+  return <CoachShell>{children}</CoachShell>;
 }
