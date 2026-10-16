@@ -129,7 +129,7 @@ export function ProgramList({ programs }: { programs: ProgramCard[] }) {
                     confirmation={
                       program.template_version === 2
                         ? undefined
-                        : `Create a separate four-week draft from ${program.name}? Only Weeks 1–4 are included; missing weeks/workout blocks start empty. Later weeks remain in the original. Workout labels become numbers. Existing lb loads in the copy are converted to kg. Review the new copy before using it.`
+                        :`Create a separate draft from ${program.name}? Its complete duration, weeks, workouts, exercises and prescribed sets will be copied. Existing lb loads will be converted to kg. Review the new draft before using it.`
                     }
                     confirmLabel="Create copy"
                   />

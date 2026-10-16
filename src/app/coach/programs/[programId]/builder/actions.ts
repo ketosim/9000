@@ -23,7 +23,6 @@ export async function moveWorkout(
   void _previous;
   void _form;
   return {
-    error: "Refresh and use Manage to move the workout across all four weeks.",
-    message: "",
+    error: "Refresh and use Manage to move the workout across every week.",    message: "",
   };
 }
