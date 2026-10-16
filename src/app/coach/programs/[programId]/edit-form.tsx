@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useRef, useState } from "react";
+import { MesocycleDurationSlider } from "@/components/forms/mesocycle-duration-slider";
 import { WorkoutCountSlider } from "@/components/forms/workout-count-slider";
 import { removalTotals, type RemovalCount } from "@/lib/programs/model";
 import {
@@ -38,12 +39,28 @@ export function EditProgramForm({
 }: EditProgramFormProps) {
   const form = useRef<HTMLFormElement>(null);
   const [requestId] = useState(() => crypto.randomUUID());
-  const originalCount = Number(initialValues.sessionsPerWeek);
-  const [count, setCount] = useState(originalCount);
+
+  const originalDuration = Number(initialValues.durationWeeks);
+  const originalWorkoutCount = Number(initialValues.sessionsPerWeek);
+
+  const [durationWeeks, setDurationWeeks] =
+    useState(originalDuration);
+
+  const [workoutCount, setWorkoutCount] =
+    useState(originalWorkoutCount);
+
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const allowSubmit = useRef(false);
-  const totals = removalTotals(removalCounts, count);
+
+  const removesWeeks = durationWeeks < originalDuration;
+  const removesWorkouts = workoutCount < originalWorkoutCount;
+
+  const workoutRemovalTotals = removalTotals(
+    removalCounts,
+    workoutCount,
+  );
+
   const initialState: ProgramEditState = {
     error: "",
     values: initialValues,
@@ -53,6 +70,11 @@ export function EditProgramForm({
     updateProgram,
     initialState,
   );
+
+  function clearConfirmation() {
+    setConfirming(false);
+    setConfirmed(false);
+  }
 
   return (
     <form
@@ -64,7 +86,11 @@ export function EditProgramForm({
           allowSubmit.current = false;
           return;
         }
-        if (fixedStructure && count < originalCount) {
+
+        if (
+          fixedStructure &&
+          (removesWeeks || removesWorkouts)
+        ) {
           event.preventDefault();
           setConfirming(true);
           setConfirmed(false);
@@ -74,7 +100,11 @@ export function EditProgramForm({
       <input type="hidden" name="programId" value={programId} />
       <input type="hidden" name="requestId" value={requestId} />
       <input type="hidden" name="revision" value={revision} />
-      <input type="hidden" name="confirmed" value={confirmed ? "yes" : "no"} />
+      <input
+        type="hidden"
+        name="confirmed"
+        value={confirmed ? "yes" : "no"}
+      />
 
       <fieldset
         disabled={pending}
@@ -82,7 +112,7 @@ export function EditProgramForm({
       >
         <div>
           <label htmlFor="name" className={labelClass}>
-            Program name
+            Mesocycle name
           </label>
 
           <input
@@ -128,114 +158,156 @@ export function EditProgramForm({
 
         {fixedStructure ? (
           <>
-            <p className="text-sm text-muted">Four-week template · Weeks 1–4</p>
-            <WorkoutCountSlider
-              value={count}
+            <MesocycleDurationSlider
+              value={durationWeeks}
               onChange={(value) => {
-                setCount(value);
-                setConfirming(false);
-                setConfirmed(false);
+                setDurationWeeks(value);
+                clearConfirmation();
+              }}
+              disabled={pending}
+            />
+
+            <WorkoutCountSlider
+              value={workoutCount}
+              weekCount={durationWeeks}
+              onChange={(value) => {
+                setWorkoutCount(value);
+                clearConfirmation();
               }}
               disabled={pending}
             />
           </>
         ) : (
           <>
-            <input type="hidden" name="sessionsPerWeek" value={originalCount} />
-            <p className="text-sm text-muted">
-              Existing programme preserved. Create a four-week copy from
-              Programs to change its schedule.
+            <input
+              type="hidden"
+              name="durationWeeks"
+              value={originalDuration}
+            />
+
+            <input
+              type="hidden"
+              name="sessionsPerWeek"
+              value={originalWorkoutCount}
+            />
+
+            <p className="rounded-lg border border-white/10 bg-black/30 p-4 text-sm leading-relaxed text-muted">
+              This older mesocycle is preserved in its current
+              structure. Duplicate it from the Mesocycles page to use
+              the variable-duration builder.
             </p>
           </>
         )}
+
+        <div>
+          <fieldset>
+            <legend className={labelClass}>Status</legend>
+
+            <div className="grid grid-cols-3 gap-3">
+              {statusOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className="relative cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="status"
+                    value={option.value}
+                    defaultChecked={
+                      state.values.status === option.value
+                    }
+                    required
+                    className="peer sr-only"
+                  />
+
+                  <span className="flex min-h-14 items-center justify-center rounded-xl border border-white/15 bg-black px-3 py-3 text-sm font-medium text-muted transition peer-checked:border-hal-red peer-checked:bg-hal-red/10 peer-checked:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-red-400">
+                    {option.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <p className="mt-3 text-xs leading-relaxed text-muted">
+            Draft: still being built. Active: ready for use. Archived:
+            kept for reference.
+          </p>
+        </div>
+
         {confirming && (
           <section
             role="alertdialog"
-            aria-labelledby="remove-workouts-title"
+            aria-labelledby="structure-change-title"
             className="rounded-xl border border-red-400/40 bg-red-950/20 p-5"
           >
-            <h2 id="remove-workouts-title" className="font-semibold">
-              Remove workouts across all four weeks?
+            <h2
+              id="structure-change-title"
+              className="font-semibold"
+            >
+              Remove part of this mesocycle?
             </h2>
-            <p className="mt-3 text-sm">
-              Remove{" "}
-              {Array.from(
-                { length: originalCount - count },
-                (_, i) => `Workout ${count + i + 1}`,
-              ).join(", ")}{" "}
-              from every week, including {totals.exercises} exercises and{" "}
-              {totals.sets} prescribed sets. This cannot be undone.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
+
+            <div className="mt-3 space-y-3 text-sm leading-relaxed">
+              {removesWeeks && (
+                <p>
+                  Weeks {durationWeeks + 1}–{originalDuration} will be
+                  removed, including their workouts, exercises and
+                  prescribed sets.
+                </p>
+              )}
+
+              {removesWorkouts && (
+                <p>
+                  {Array.from(
+                    {
+                      length:
+                        originalWorkoutCount - workoutCount,
+                    },
+                    (_, index) =>
+                      `Workout ${workoutCount + index + 1}`,
+                  ).join(", ")}{" "}
+                  will be removed from the remaining weeks. This may
+                  remove up to {workoutRemovalTotals.exercises}{" "}
+                  exercises and {workoutRemovalTotals.sets} prescribed
+                  sets.
+                </p>
+              )}
+
+              <p className="font-medium text-red-200">
+                This cannot be undone.
+              </p>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
               <button
                 type="button"
                 className="min-h-12 rounded-lg border border-white/15 px-4"
                 onClick={() => {
-                  setCount(originalCount);
-                  setConfirming(false);
-                  setConfirmed(false);
+                  setDurationWeeks(originalDuration);
+                  setWorkoutCount(originalWorkoutCount);
+                  clearConfirmation();
                 }}
               >
                 Cancel
               </button>
+
               <button
                 type="button"
                 className="min-h-12 rounded-lg bg-hal-red px-4 font-semibold text-white"
                 onClick={() => {
                   setConfirmed(true);
                   allowSubmit.current = true;
-                  // Commit the hidden confirmation value before native form submission.
-                  requestAnimationFrame(() => form.current?.requestSubmit());
+
+                  requestAnimationFrame(() => {
+                    form.current?.requestSubmit();
+                  });
                 }}
               >
-                Remove workouts
+                Confirm and save
               </button>
             </div>
           </section>
         )}
-
-        <fieldset className="min-w-0">
-          <legend className={labelClass}>Status</legend>
-
-          <div className="grid grid-cols-3 gap-3">
-            {statusOptions.map((option) => (
-              <label key={option.value} className="relative">
-                <input
-                  type="radio"
-                  name="status"
-                  value={option.value}
-                  defaultChecked={state.values.status === option.value}
-                  required
-                  className="peer sr-only"
-                />
-
-                <span
-                  className="
-                    flex min-h-14 cursor-pointer items-center
-                    justify-center rounded-xl border border-white/15
-                    bg-panel px-2 py-3 text-sm font-medium
-                    text-muted transition
-                    peer-checked:border-hal-red
-                    peer-checked:bg-hal-red/10
-                    peer-checked:text-foreground
-                    peer-focus-visible:outline-2
-                    peer-focus-visible:outline-offset-2
-                    peer-focus-visible:outline-red-400
-                    peer-disabled:cursor-wait
-                  "
-                >
-                  {option.label}
-                </span>
-              </label>
-            ))}
-          </div>
-
-          <p className="mt-3 text-xs leading-relaxed text-muted">
-            Draft: being prepared. Active: ready to use. Archived: kept for
-            reference. Active requires exercises and valid prescribed sets in
-            every workout.
-          </p>
-        </fieldset>
 
         <button
           type="submit"
@@ -259,7 +331,7 @@ export function EditProgramForm({
         href="/coach/programs"
         className="mt-5 inline-flex min-h-11 items-center text-sm text-muted underline underline-offset-4"
       >
-        Back to programs
+        Back to mesocycles
       </Link>
     </form>
   );

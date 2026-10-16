@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
+import { MesocycleDurationSlider } from "@/components/forms/mesocycle-duration-slider";
 import { WorkoutCountSlider } from "@/components/forms/workout-count-slider";
-import { createProgram, type ProgramFormState } from "./actions";
+import { DEFAULT_MESOCYCLE_WEEKS } from "@/lib/programs/model";
+import {
+  createProgram,
+  type ProgramFormState,
+} from "./actions";
 
 const initialState: ProgramFormState = {
   error: "",
@@ -12,11 +17,20 @@ const initialState: ProgramFormState = {
 const inputClass =
   "min-h-12 w-full rounded-lg border border-white/15 bg-black px-4 py-3 text-base text-foreground outline-none transition placeholder:text-zinc-600 focus:border-red-400 focus:ring-1 focus:ring-red-400";
 
-const labelClass = "mb-2 block text-sm font-medium text-zinc-300";
+const labelClass =
+  "mb-2 block text-sm font-medium text-zinc-300";
 
-export function ProgramForm({ programId }: { programId: string }) {
+export function ProgramForm({
+  programId,
+}: {
+  programId: string;
+}) {
   const [requestId] = useState(() => crypto.randomUUID());
-  const [count, setCount] = useState(3);
+  const [durationWeeks, setDurationWeeks] = useState(
+    DEFAULT_MESOCYCLE_WEEKS,
+  );
+  const [workoutCount, setWorkoutCount] = useState(3);
+
   const [state, formAction, pending] = useActionState(
     createProgram,
     initialState,
@@ -30,10 +44,12 @@ export function ProgramForm({ programId }: { programId: string }) {
 
       <fieldset
         disabled={pending}
-        className="hal-panel min-w-0 space-y-6 rounded-xl border border-white/10 bg-panel p-5 disabled:opacity-60 sm:p-7"
+        className="hal-panel min-w-0 space-y-7 rounded-xl border border-white/10 bg-panel p-5 disabled:opacity-60 sm:p-7"
       >
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold">Program details</h2>
+          <h2 className="text-xl font-semibold">
+            Mesocycle details
+          </h2>
 
           <span className="text-xs uppercase tracking-widest text-muted">
             Draft
@@ -42,7 +58,7 @@ export function ProgramForm({ programId }: { programId: string }) {
 
         <div>
           <label htmlFor="name" className={labelClass}>
-            Program name
+            Mesocycle name
           </label>
 
           <input
@@ -52,14 +68,15 @@ export function ProgramForm({ programId }: { programId: string }) {
             required
             maxLength={100}
             defaultValue={state.values?.name ?? ""}
-            placeholder="Lower Body Strength"
+            placeholder="BJJ Strength"
             className={inputClass}
           />
         </div>
 
         <div>
           <label htmlFor="goal" className={labelClass}>
-            Goal <span className="text-muted">(optional)</span>
+            Goal{" "}
+            <span className="text-muted">(optional)</span>
           </label>
 
           <input
@@ -68,14 +85,15 @@ export function ProgramForm({ programId }: { programId: string }) {
             type="text"
             maxLength={300}
             defaultValue={state.values?.goal ?? ""}
-            placeholder="Build lower-body strength"
+            placeholder="Build maximal strength for grappling"
             className={inputClass}
           />
         </div>
 
         <div>
           <label htmlFor="description" className={labelClass}>
-            Description <span className="text-muted">(optional)</span>
+            Description{" "}
+            <span className="text-muted">(optional)</span>
           </label>
 
           <textarea
@@ -84,23 +102,34 @@ export function ProgramForm({ programId }: { programId: string }) {
             rows={4}
             maxLength={2000}
             defaultValue={state.values?.description ?? ""}
-            placeholder="Describe the focus of this program."
+            placeholder="Describe the focus of this mesocycle."
             className={`${inputClass} resize-y`}
           />
         </div>
 
-        <p className="text-sm text-muted">
-          Four-week template · Weeks 1–4 are created automatically.
-        </p>
-        <WorkoutCountSlider
-          value={count}
-          onChange={setCount}
-          disabled={pending}
-        />
+        <div className="border-t border-white/10 pt-7">
+          <MesocycleDurationSlider
+            value={durationWeeks}
+            onChange={setDurationWeeks}
+            disabled={pending}
+          />
+        </div>
+
+        <div className="border-t border-white/10 pt-7">
+          <WorkoutCountSlider
+            value={workoutCount}
+            weekCount={durationWeeks}
+            onChange={setWorkoutCount}
+            disabled={pending}
+          />
+        </div>
 
         <p className="text-sm leading-relaxed text-muted">
-          Save these details to create all four weeks and their workout blocks,
-          then add exercises.
+          Saving creates {durationWeeks}{" "}
+          {durationWeeks === 1 ? "week" : "weeks"} with{" "}
+          {workoutCount}{" "}
+          {workoutCount === 1 ? "workout" : "workouts"} in each
+          week. You can then add exercises from the Workouts tab.
         </p>
 
         <button
@@ -108,7 +137,7 @@ export function ProgramForm({ programId }: { programId: string }) {
           disabled={pending}
           className="min-h-12 w-full rounded-lg bg-hal-red px-6 py-3 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 active:bg-hal-red-dark disabled:cursor-wait disabled:opacity-60"
         >
-          {pending ? "Saving…" : "Save draft"}
+          {pending ? "Creating…" : "Create draft"}
         </button>
       </fieldset>
 
@@ -125,7 +154,7 @@ export function ProgramForm({ programId }: { programId: string }) {
         href="/coach/programs"
         className="mt-5 inline-flex min-h-11 items-center text-sm text-muted underline underline-offset-4"
       >
-        Back to programs
+        Back to mesocycles
       </Link>
     </form>
   );
