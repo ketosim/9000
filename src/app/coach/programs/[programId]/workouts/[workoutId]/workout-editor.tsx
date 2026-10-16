@@ -10,7 +10,6 @@ import { FormDialog } from "@/components/forms/form-dialog";
 import { WorkoutForm } from "./workout-form";
 import { EditWorkoutItem } from "./edit-controls";
 import { WorkoutPanels } from "../../workout-panels";
-import { ProgressionView } from "../../progression-view";
 import {
   matchingExercise,
   reps,
@@ -33,6 +32,7 @@ export type Exercise = ProgressionExercise & {
   exercise_group: string;
   coach_notes: string;
 };
+
 const loadOptions = [
   { value: "total", label: "Total weight" },
   { value: "per_dumbbell", label: "Per dumbbell" },
@@ -41,6 +41,7 @@ const loadOptions = [
   { value: "assistance", label: "Assistance weight" },
   { value: "bodyweight", label: "Bodyweight" },
 ];
+
 function availableNumbers(used: number[]) {
   return Array.from({ length: 50 }, (_, index) => index + 1)
     .filter((number) => !used.includes(number))
@@ -56,7 +57,6 @@ export function WorkoutEditor({
   week,
   weeks,
   exercises,
-  initialView,
   revision,
   readOnly = false,
 }: {
@@ -67,21 +67,25 @@ export function WorkoutEditor({
   week: WorkspaceWeek;
   weeks: WorkspaceWeek[];
   exercises: Exercise[];
-  initialView: "exercises" | "progression";
 }) {
   const workoutId = workout.id;
+
   const currentExercises = exercises
     .filter((exercise) => exercise.workout_id === workoutId)
     .sort((a, b) => a.position - b.position);
+
   const exerciseNumbers = availableNumbers(
     currentExercises.map((exercise) => exercise.position),
   );
+
   const previousWeek = weeks.find(
     (item) => item.week_number === week.week_number - 1,
   );
+
   const previousWorkout = previousWeek?.program_workouts.find(
     (item) => item.progression_key === workout.progression_key,
   );
+
   const addExercise =
     !readOnly && exerciseNumbers.length > 0 ? (
       <FormDialog
@@ -102,26 +106,13 @@ export function WorkoutEditor({
       </FormDialog>
     ) : (
       <span className="text-xs text-muted">
-        {readOnly ? "Preserved program" : "50 exercises added"}
+        {readOnly ? "Preserved mesocycle" : "50 exercises added"}
       </span>
     );
 
   return (
     <WorkoutPanels
-      initialView={initialView}
       addExercise={addExercise}
-      progression={
-        <ProgressionView
-          programId={programId}
-          weeks={weeks}
-          workout={workout}
-          exercises={exercises}
-          currentExercises={currentExercises}
-          revision={revision}
-          fixedStructure={!readOnly}
-          readOnly={readOnly}
-        />
-      }
       exercises={
         <section
           aria-label={`Workout ${workout.position} exercises`}
@@ -135,29 +126,38 @@ export function WorkoutEditor({
                   ? ` · ${workout.estimated_minutes} min workout`
                   : ""}
               </summary>
+
               <p className="whitespace-pre-line pb-4 text-sm">
                 {workout.warmup_notes}
               </p>
             </details>
           )}
+
           {currentExercises.length === 0 && (
             <div className="hal-panel rounded-xl p-6">
-              <h2 className="text-xl font-semibold">No exercises yet</h2>
+              <h2 className="text-xl font-semibold">
+                No exercises yet
+              </h2>
+
               <p className="mt-2 text-sm text-muted">
                 Tap + Exercise above to build this workout.
               </p>
             </div>
           )}
+
           {currentExercises.map((exercise, exerciseIndex) => {
             const sets = [...exercise.program_sets].sort(
               (a, b) => a.set_number - b.set_number,
             );
+
             const hasExistingLoad = sets.some(
               (set) => set.target_load !== null,
             );
+
             const setNumbers = availableNumbers(
               sets.map((set) => set.set_number),
             );
+
             const previous =
               previousWorkout &&
               matchingExercise(
@@ -165,6 +165,7 @@ export function WorkoutEditor({
                 previousWorkout.id,
                 exercise.progression_key,
               );
+
             const details = [
               ["Variation", exercise.variation],
               ["Target muscles", exercise.target_muscles],
@@ -173,14 +174,19 @@ export function WorkoutEditor({
               ["Setup", exercise.setup_instructions],
               [
                 "Side",
-                sideOptions.find((option) => option.value === exercise.side)
-                  ?.label ?? exercise.side,
+                sideOptions.find(
+                  (option) => option.value === exercise.side,
+                )?.label ?? exercise.side,
               ],
               [
                 "Load convention",
                 (hasExistingLoad ? loadOptions : []).find(
-                  (option) => option.value === exercise.load_convention,
-                )?.label ?? (hasExistingLoad ? exercise.load_convention : ""),
+                  (option) =>
+                    option.value === exercise.load_convention,
+                )?.label ??
+                  (hasExistingLoad
+                    ? exercise.load_convention
+                    : ""),
               ],
               ["Coaching cues", exercise.coaching_cues],
               ["Superset / circuit group", exercise.exercise_group],
@@ -198,16 +204,19 @@ export function WorkoutEditor({
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/15 font-mono text-sm text-hal-red-bright">
                       {String(exercise.position).padStart(2, "0")}
                     </span>
+
                     <div className="min-w-0">
                       <h2 className="text-xl font-semibold [overflow-wrap:anywhere]">
                         {exercise.name}
                       </h2>
+
                       <p className="mt-1 text-xs text-muted">
                         {sets.length} prescribed{" "}
                         {sets.length === 1 ? "set" : "sets"}
                       </p>
                     </div>
                   </div>
+
                   {!readOnly && (
                     <EditWorkoutItem
                       mode="exercise"
@@ -219,18 +228,27 @@ export function WorkoutEditor({
                     />
                   )}
                 </header>
+
                 <p className="mt-3 text-xs leading-relaxed text-muted">
                   {previous
-                    ? `Week ${week.week_number - 1} prescribed: ${summarizePrescription(previous)}${previous.program_sets.some((set) => set.target_load !== null) ? ` · ${previous.load_convention.replaceAll("_", " ")}` : ""}`
+                    ? `Week ${week.week_number - 1} prescribed: ${summarizePrescription(previous)}${
+                        previous.program_sets.some(
+                          (set) => set.target_load !== null,
+                        )
+                          ? ` · ${previous.load_convention.replaceAll("_", " ")}`
+                          : ""
+                      }`
                     : week.week_number > 1
-                      ? `No linked prescription in Week ${week.week_number - 1}. Link it in Progression to compare.`
+                      ? `No linked prescription in Week ${week.week_number - 1}.`
                       : "First week · no previous prescription"}
                 </p>
+
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full min-w-[540px] text-left text-sm tabular-nums">
                     <caption className="sr-only">
                       Prescribed sets for {exercise.name}
                     </caption>
+
                     <thead>
                       <tr className="border-y border-white/10 text-xs text-muted">
                         {[
@@ -252,18 +270,31 @@ export function WorkoutEditor({
                         ))}
                       </tr>
                     </thead>
+
                     <tbody>
                       {sets.map((set) => (
-                        <tr key={set.id} className="border-b border-white/10">
-                          <th scope="row" className="px-2 py-2 font-medium">
+                        <tr
+                          key={set.id}
+                          className="border-b border-white/10"
+                        >
+                          <th
+                            scope="row"
+                            className="px-2 py-2 font-medium"
+                          >
                             {set.set_number}
                           </th>
+
                           <td className="px-2 py-2 text-muted">
                             {setOptions.find(
-                              (item) => item.value === set.set_type,
+                              (item) =>
+                                item.value === set.set_type,
                             )?.label ?? set.set_type}
                           </td>
-                          <td className="px-2 py-2">{reps(set)}</td>
+
+                          <td className="px-2 py-2">
+                            {reps(set)}
+                          </td>
+
                           {hasExistingLoad && (
                             <td className="px-2 py-2">
                               {set.target_load === null
@@ -271,12 +302,17 @@ export function WorkoutEditor({
                                 : `${set.target_load} ${exercise.load_unit}`}
                             </td>
                           )}
-                          <td className="px-2 py-2">{set.rir ?? "—"}</td>
+
+                          <td className="px-2 py-2">
+                            {set.rir ?? "—"}
+                          </td>
+
                           <td className="px-2 py-2">
                             {set.rest_seconds === null
                               ? "—"
                               : `${set.rest_seconds}s`}
                           </td>
+
                           {!readOnly && (
                             <td className="px-2 py-2 text-right">
                               <EditWorkoutItem
@@ -294,16 +330,19 @@ export function WorkoutEditor({
                     </tbody>
                   </table>
                 </div>
+
                 {!sets.length && (
                   <p className="py-4 text-sm text-muted">
                     No prescribed sets yet. Add your first set below.
                   </p>
                 )}
+
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <span className="text-xs text-muted">
                     {sets.length} prescribed{" "}
                     {sets.length === 1 ? "set" : "sets"}
                   </span>
+
                   {!readOnly && setNumbers.length > 0 && (
                     <FormDialog
                       key={`add-set-${exercise.id}-${sets.length}`}
@@ -311,9 +350,11 @@ export function WorkoutEditor({
                       trigger="+ Add set"
                     >
                       <p className="mt-4 text-xs text-muted">
-                        For exact reps, leave maximum reps blank. Personal loads
-                        are set when assigning the program.
+                        For exact reps, leave maximum reps blank.
+                        Personal loads are set when assigning the
+                        mesocycle.
                       </p>
+
                       <WorkoutForm
                         mode="set"
                         programId={programId}
@@ -327,6 +368,7 @@ export function WorkoutEditor({
                     </FormDialog>
                   )}
                 </div>
+
                 {!readOnly && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     <TemplateActionControl
@@ -334,10 +376,14 @@ export function WorkoutEditor({
                       programId={programId}
                       revision={revision}
                       operation="duplicate_exercise"
-                      payload={{ workoutId, exerciseId: exercise.id }}
+                      payload={{
+                        workoutId,
+                        exerciseId: exercise.id,
+                      }}
                       label="Duplicate exercise"
                       disabled={currentExercises.length >= 50}
                     />
+
                     <TemplateActionControl
                       key={`up-${exercise.id}-${revision}`}
                       programId={programId}
@@ -351,6 +397,7 @@ export function WorkoutEditor({
                       label="↑ Move up"
                       disabled={exerciseIndex === 0}
                     />
+
                     <TemplateActionControl
                       key={`down-${exercise.id}-${revision}`}
                       programId={programId}
@@ -362,41 +409,58 @@ export function WorkoutEditor({
                         direction: "down",
                       }}
                       label="↓ Move down"
-                      disabled={exerciseIndex === currentExercises.length - 1}
+                      disabled={
+                        exerciseIndex ===
+                        currentExercises.length - 1
+                      }
                     />
                   </div>
                 )}
+
                 <details className="mt-3 border-t border-white/10">
                   <summary className="min-h-11 cursor-pointer py-3 text-sm text-muted">
                     Coaching notes &amp; setup
                   </summary>
+
                   <dl className="grid gap-4 py-2 sm:grid-cols-2">
                     {details.map(([label, value]) => (
                       <div key={label}>
-                        <dt className="text-xs text-muted">{label}</dt>
+                        <dt className="text-xs text-muted">
+                          {label}
+                        </dt>
+
                         <dd className="mt-1 whitespace-pre-line text-sm [overflow-wrap:anywhere]">
                           {value}
                         </dd>
                       </div>
                     ))}
                   </dl>
+
                   {sets
-                    .filter((set) => set.notes || set.side_override)
+                    .filter(
+                      (set) => set.notes || set.side_override,
+                    )
                     .map((set) => (
                       <div
                         key={set.id}
                         className="mt-3 border-t border-white/10 py-3 text-sm"
                       >
-                        <p className="font-medium">Set {set.set_number}</p>
+                        <p className="font-medium">
+                          Set {set.set_number}
+                        </p>
+
                         {set.side_override && (
                           <p className="mt-1 text-muted">
                             {
                               sideOptions.find(
-                                (item) => item.value === set.side_override,
+                                (item) =>
+                                  item.value ===
+                                  set.side_override,
                               )?.label
                             }
                           </p>
                         )}
+
                         {set.notes && (
                           <p className="mt-1 whitespace-pre-line text-muted">
                             {set.notes}
