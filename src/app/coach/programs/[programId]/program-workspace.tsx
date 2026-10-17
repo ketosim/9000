@@ -389,8 +389,7 @@ export async function ProgramWorkspace({
           key={`${workout.id}-${revision}`}
           programId={programId}
           workout={workout}
-          week={week}
-          weeks={weeks}
+
           exercises={allExercises.filter((exercise) =>
             allWorkouts.some(
               (workoutItem) =>

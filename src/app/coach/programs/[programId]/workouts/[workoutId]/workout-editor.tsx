@@ -1,25 +1,21 @@
 import { randomUUID } from "node:crypto";
+
+import { FormDialog } from "@/components/forms/form-dialog";
 import { TemplateActionControl } from "../../../template-action-control";
+import { WorkoutPanels } from "../../workout-panels";
+import {
+  reps,
+  type ProgressionExercise,
+} from "../../progression-model";
+import type { WorkspaceWorkout } from "../../workspace-selection";
+import { EditWorkoutItem } from "./edit-controls";
 import {
   createExerciseFields,
   setFields,
   sideOptions,
   setOptions,
 } from "./exercise-fields";
-import { FormDialog } from "@/components/forms/form-dialog";
 import { WorkoutForm } from "./workout-form";
-import { EditWorkoutItem } from "./edit-controls";
-import { WorkoutPanels } from "../../workout-panels";
-import {
-  matchingExercise,
-  reps,
-  summarizePrescription,
-  type ProgressionExercise,
-} from "../../progression-model";
-import type {
-  WorkspaceWeek,
-  WorkspaceWorkout,
-} from "../../workspace-selection";
 
 export type Exercise = ProgressionExercise & {
   variation: string;
@@ -54,8 +50,6 @@ function availableNumbers(used: number[]) {
 export function WorkoutEditor({
   programId,
   workout,
-  week,
-  weeks,
   exercises,
   revision,
   readOnly = false,
@@ -64,8 +58,6 @@ export function WorkoutEditor({
   revision: number;
   readOnly?: boolean;
   workout: WorkspaceWorkout;
-  week: WorkspaceWeek;
-  weeks: WorkspaceWeek[];
   exercises: Exercise[];
 }) {
   const workoutId = workout.id;
@@ -76,14 +68,6 @@ export function WorkoutEditor({
 
   const exerciseNumbers = availableNumbers(
     currentExercises.map((exercise) => exercise.position),
-  );
-
-  const previousWeek = weeks.find(
-    (item) => item.week_number === week.week_number - 1,
-  );
-
-  const previousWorkout = previousWeek?.program_workouts.find(
-    (item) => item.progression_key === workout.progression_key,
   );
 
   const addExercise =
@@ -106,7 +90,7 @@ export function WorkoutEditor({
       </FormDialog>
     ) : (
       <span className="text-xs text-muted">
-        {readOnly ? "Preserved mesocycle" : "50 exercises added"}
+        {readOnly ? "Preserved template" : "50 exercises added"}
       </span>
     );
 
@@ -158,13 +142,11 @@ export function WorkoutEditor({
               sets.map((set) => set.set_number),
             );
 
-            const previous =
-              previousWorkout &&
-              matchingExercise(
-                exercises,
-                previousWorkout.id,
-                exercise.progression_key,
-              );
+            const loadConvention =
+              loadOptions.find(
+                (option) =>
+                  option.value === exercise.load_convention,
+              )?.label ?? exercise.load_convention;
 
             const details = [
               ["Variation", exercise.variation],
@@ -178,16 +160,7 @@ export function WorkoutEditor({
                   (option) => option.value === exercise.side,
                 )?.label ?? exercise.side,
               ],
-              [
-                "Load convention",
-                (hasExistingLoad ? loadOptions : []).find(
-                  (option) =>
-                    option.value === exercise.load_convention,
-                )?.label ??
-                  (hasExistingLoad
-                    ? exercise.load_convention
-                    : ""),
-              ],
+              ["Load convention", loadConvention],
               ["Coaching cues", exercise.coaching_cues],
               ["Superset / circuit group", exercise.exercise_group],
               ["Coach notes", exercise.coach_notes],
@@ -228,20 +201,6 @@ export function WorkoutEditor({
                     />
                   )}
                 </header>
-
-                <p className="mt-3 text-xs leading-relaxed text-muted">
-                  {previous
-                    ? `Week ${week.week_number - 1} prescribed: ${summarizePrescription(previous)}${
-                        previous.program_sets.some(
-                          (set) => set.target_load !== null,
-                        )
-                          ? ` · ${previous.load_convention.replaceAll("_", " ")}`
-                          : ""
-                      }`
-                    : week.week_number > 1
-                      ? `No linked prescription in Week ${week.week_number - 1}.`
-                      : "First week · no previous prescription"}
-                </p>
 
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full min-w-[540px] text-left text-sm tabular-nums">
@@ -351,8 +310,8 @@ export function WorkoutEditor({
                     >
                       <p className="mt-4 text-xs text-muted">
                         For exact reps, leave maximum reps blank.
-                        Personal loads are set when assigning the
-                        mesocycle.
+                        Personal loads are set when assigning this
+                        template to a client mesocycle.
                       </p>
 
                       <WorkoutForm
