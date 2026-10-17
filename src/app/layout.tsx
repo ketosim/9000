@@ -1,31 +1,27 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono,  Chakra_Petch } from "next/font/google";
+import { DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
-
-
-const chakraPetch = Chakra_Petch({
-  variable: "--font-chakra-petch",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 export const metadata: Metadata = {
   title: "9000",
   description: "Training built around you.",
   applicationName: "9000",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "9000",
   },
 };
@@ -34,7 +30,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#050505",
+  themeColor: "#f5f7fb",
 };
 
 export default function RootLayout({
@@ -44,9 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${chakraPetch.variable}`}
-      >
+      <body className={`${dmSans.variable} ${geistMono.variable}`}>
         {children}
       </body>
     </html>
