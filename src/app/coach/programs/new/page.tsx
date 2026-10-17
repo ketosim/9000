@@ -10,16 +10,15 @@ export default async function NewProgramPage() {
       <div className="mx-auto max-w-2xl">
         <header>
           <p className="text-xs uppercase tracking-[0.18em] text-hal-red-bright">
-            Training programs
+            Training templates
           </p>
 
           <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">
-            Create program
+            Create template
           </h1>
 
           <p className="mt-3 text-muted">
-            Set the goal and weekly schedule for your four-week template.
-          </p>
+            Set the goal, duration and weekly schedule for your mesocycle.          </p>
         </header>
 
         <ProgramForm programId={randomUUID()} />

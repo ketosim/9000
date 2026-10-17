@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation";
 import { createCoachAdminClient } from "@/lib/supabase/admin";
-import { EditProgramForm } from "../edit-form";
 import { loadRemovalCounts } from "@/lib/programs/server";
+import { EditProgramForm } from "../edit-form";
 
 type Props = {
   params: Promise<{ programId: string }>;
 };
 
-export default async function ProgramDetailsPage({ params }: Props) {
+export default async function ProgramDetailsPage({
+  params,
+}: Props) {
   const { programId } = await params;
 
   const uuidPattern =
@@ -29,7 +31,9 @@ export default async function ProgramDetailsPage({ params }: Props) {
     .maybeSingle();
 
   if (error) {
-    throw new Error("Could not load program details. Please try again.");
+    throw new Error(
+      "Could not load mesocycle details. Please try again.",
+    );
   }
 
   if (!program) {
@@ -40,6 +44,7 @@ export default async function ProgramDetailsPage({ params }: Props) {
     name: program.name ?? "",
     goal: program.goal ?? "",
     description: program.description ?? "",
+    durationWeeks: String(program.duration_weeks),
     sessionsPerWeek: String(program.sessions_per_week),
     status: program.status,
   };
@@ -51,7 +56,7 @@ export default async function ProgramDetailsPage({ params }: Props) {
       <section className="mx-auto w-full max-w-3xl py-6">
         <header>
           <p className="text-xs uppercase tracking-[0.2em] text-hal-red-bright">
-            Program details
+            Mesocycle details
           </p>
 
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -59,12 +64,15 @@ export default async function ProgramDetailsPage({ params }: Props) {
           </h1>
 
           <p className="mt-3 text-sm text-muted">
-            Update the name, goal, schedule and status of your program.
+            Update the name, goal, duration, weekly schedule and
+            status.
           </p>
         </header>
 
         <EditProgramForm
-          key={`${programId}-${program.template_revision}-${JSON.stringify(initialValues)}`}
+          key={`${programId}-${program.template_revision}-${JSON.stringify(
+            initialValues,
+          )}`}
           programId={programId}
           initialValues={initialValues}
           revision={program.template_revision}

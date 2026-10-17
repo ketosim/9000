@@ -15,8 +15,8 @@ const navigationItems = [
     number: "02",
   },
   {
+    label: "Templates",
     href: "/coach/programs",
-    label: "Programs",
     number: "03",
   },
   {

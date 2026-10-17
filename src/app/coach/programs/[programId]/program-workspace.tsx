@@ -7,30 +7,35 @@ import {
   type Exercise,
 } from "./workouts/[workoutId]/workout-editor";
 import { WorkspaceSelect } from "./workspace-select";
-import { selectWorkspace, type WorkspaceWeek } from "./workspace-selection";
+import {
+  selectWorkspace,
+  type WorkspaceWeek,
+} from "./workspace-selection";
 import { uuidPattern } from "@/lib/programs/model";
 
 type Props = {
   programId: string;
   weekId?: string;
   workoutId?: string;
-  initialView?: "exercises" | "progression";
 };
+
 export async function ProgramWorkspace({
   programId,
   weekId,
   workoutId,
-  initialView = "exercises",
 }: Props) {
-  if (
-    ![
-      programId,
-      ...(weekId ? [weekId] : []),
-      ...(workoutId ? [workoutId] : []),
-    ].every((id) => uuidPattern.test(id))
-  )
+  const ids = [
+    programId,
+    ...(weekId ? [weekId] : []),
+    ...(workoutId ? [workoutId] : []),
+  ];
+
+  if (!ids.every((id) => uuidPattern.test(id))) {
     notFound();
+  }
+
   const admin = await createCoachAdminClient();
+
   const { data: program, error: programError } = await admin
     .from("programs")
     .select(
@@ -39,11 +44,17 @@ export async function ProgramWorkspace({
     .eq("id", programId)
     .eq("created_by", process.env.COACH_USER_ID!)
     .maybeSingle();
-  if (programError)
+
+  if (programError) {
     throw new Error(
-      "Could not load program. Run the four-week template migration before replacing the code.",
+      "Could not load the mesocycle structure. Confirm that the latest database migrations have been applied.",
     );
-  if (!program) notFound();
+  }
+
+  if (!program) {
+    notFound();
+  }
+
   const { data, error } = await admin
     .from("program_weeks")
     .select(
@@ -51,17 +62,30 @@ export async function ProgramWorkspace({
     )
     .eq("program_id", programId)
     .order("week_number");
-  if (error) throw new Error("Could not load program weeks.");
+
+  if (error) {
+    throw new Error("Could not load mesocycle weeks.");
+  }
+
   const selection = selectWorkspace(
     (data ?? []) as WorkspaceWeek[],
     weekId,
     workoutId,
   );
-  if (!selection) notFound();
+
+  if (!selection) {
+    notFound();
+  }
+
   const { weeks, week, workouts, workout } = selection;
-  const allWorkouts = weeks.flatMap((item) => item.program_workouts);
+
+  const allWorkouts = weeks.flatMap(
+    (item) => item.program_workouts,
+  );
+
   const allExercises: Exercise[] = [];
-  if (allWorkouts.length)
+
+  if (allWorkouts.length) {
     for (let offset = 0; ; offset += 500) {
       const { data: rows, error: rowError } = await admin
         .from("program_exercises")
@@ -72,20 +96,38 @@ export async function ProgramWorkspace({
         )
         .order("id")
         .range(offset, offset + 499);
-      if (rowError) throw new Error("Could not load prescribed exercises.");
+
+      if (rowError) {
+        throw new Error(
+          "Could not load prescribed exercises.",
+        );
+      }
+
       allExercises.push(...((rows ?? []) as Exercise[]));
-      if (!rows || rows.length < 500) break;
+
+      if (!rows || rows.length < 500) {
+        break;
+      }
     }
+  }
+
   const fixed = program.template_version === 2;
   const revision = program.template_revision;
   const base = `/coach/programs/${programId}`;
+
   const destinationExercises = allExercises.filter((item) =>
-    workouts.some((w) => w.id === item.workout_id),
+    workouts.some(
+      (workoutItem) =>
+        workoutItem.id === item.workout_id,
+    ),
   );
+
   const copySets = destinationExercises.reduce(
-    (sum, e) => sum + e.program_sets.length,
+    (sum, exercise) =>
+      sum + exercise.program_sets.length,
     0,
   );
+
   return (
     <main className="flex min-h-0 flex-1 flex-col">
       <header className="shrink-0 border-b border-white/10 bg-background px-4 pb-2 pt-3 sm:px-6">
@@ -96,41 +138,54 @@ export async function ProgramWorkspace({
           >
             {program.name}
           </h1>
+
           <span className="shrink-0 text-[11px] uppercase tracking-widest text-muted">
             {program.status}
           </span>
         </div>
+
         <p className="mt-1 text-xs text-muted">
-          {program.duration_weeks} weeks · {program.sessions_per_week} workouts
+          {program.duration_weeks}{" "}
+          {program.duration_weeks === 1 ? "week" : "weeks"} ·{" "}
+          {program.sessions_per_week}{" "}
+          {program.sessions_per_week === 1
+            ? "workout"
+            : "workouts"}{" "}
           per week
         </p>
+
         {!fixed && (
           <div className="mt-2 flex flex-wrap items-center gap-3 rounded-lg border border-white/15 px-3 py-2">
             <p className="text-xs text-muted">
-              Existing program preserved. Create a four-week copy to use the new
-              builder.
+              Existing mesocycle preserved. Create a compatible
+              copy to use the current builder.
             </p>
+
             <TemplateActionControl
               key={`legacy-${revision}`}
               programId={programId}
               revision={revision}
               operation="duplicate"
-              label="Create 4-week copy"
-              confirmation="Create a separate draft using Weeks 1–4? Later weeks stay in the original. Missing workout blocks start empty. Workout labels become numbers, and copied lb loads are converted to kg."
+              label="Create compatible copy"
+              confirmation="Create a separate draft from this mesocycle? Its complete duration and workout structure will be copied. Missing workout blocks will remain empty, workout labels will become numbers, and copied lb loads will be converted to kg."
               confirmLabel="Create copy"
             />
           </div>
         )}
+
         <div className="mt-2">
           <WorkspaceSelect
             label="Week"
             value={`${base}/builder?week=${week?.id}`}
             options={weeks.map((item) => ({
               value: `${base}/builder?week=${item.id}`,
-              label: `Week ${item.week_number}${item.is_deload ? " · Deload" : ""}`,
+              label: `Week ${item.week_number}${
+                item.is_deload ? " · Deload" : ""
+              }`,
             }))}
           />
         </div>
+
         {week && (
           <div className="flex min-w-0 items-center gap-2">
             <div className="min-w-0 flex-1">
@@ -143,6 +198,7 @@ export async function ProgramWorkspace({
                 }))}
               />
             </div>
+
             {fixed && (
               <FormDialog
                 key={`manage-${week.id}-${revision}`}
@@ -150,9 +206,10 @@ export async function ProgramWorkspace({
                 trigger="Manage"
               >
                 <p className="mt-4 text-sm text-muted">
-                  Adding, removing or moving a workout applies across all four
-                  weeks.
+                  Adding, removing or moving a workout applies
+                  across every week in this mesocycle.
                 </p>
+
                 {program.sessions_per_week < 7 && (
                   <div className="mt-4">
                     <TemplateActionControl
@@ -165,41 +222,70 @@ export async function ProgramWorkspace({
                     />
                   </div>
                 )}
+
                 <div className="mt-4 divide-y divide-white/10">
                   {workouts.map((item, index) => {
                     const matchingIds = allWorkouts
-                      .filter((w) => w.progression_key === item.progression_key)
-                      .map((w) => w.id);
-                    const affected = allExercises.filter((e) =>
-                      matchingIds.includes(e.workout_id),
+                      .filter(
+                        (workoutItem) =>
+                          workoutItem.progression_key ===
+                          item.progression_key,
+                      )
+                      .map(
+                        (workoutItem) => workoutItem.id,
+                      );
+
+                    const affected = allExercises.filter(
+                      (exercise) =>
+                        matchingIds.includes(
+                          exercise.workout_id,
+                        ),
                     );
+
                     const sets = affected.reduce(
-                      (sum, e) => sum + e.program_sets.length,
+                      (sum, exercise) =>
+                        sum +
+                        exercise.program_sets.length,
                       0,
                     );
+
                     return (
                       <div key={item.id} className="py-4">
-                        <p className="font-semibold">Workout {item.position}</p>
+                        <p className="font-semibold">
+                          Workout {item.position}
+                        </p>
+
                         <div className="mt-3 flex flex-wrap gap-3">
                           <TemplateActionControl
                             key={`up-${item.id}-${revision}`}
                             programId={programId}
                             revision={revision}
                             operation="move_workout"
-                            payload={{ workoutId: item.id, direction: "up" }}
+                            payload={{
+                              workoutId: item.id,
+                              direction: "up",
+                            }}
                             label="↑ Move up"
                             disabled={index === 0}
                           />
+
                           <TemplateActionControl
                             key={`down-${item.id}-${revision}`}
                             programId={programId}
                             revision={revision}
                             operation="move_workout"
-                            payload={{ workoutId: item.id, direction: "down" }}
+                            payload={{
+                              workoutId: item.id,
+                              direction: "down",
+                            }}
                             label="↓ Move down"
-                            disabled={index === workouts.length - 1}
+                            disabled={
+                              index ===
+                              workouts.length - 1
+                            }
                           />
                         </div>
+
                         {program.sessions_per_week > 1 && (
                           <div className="mt-3">
                             <TemplateActionControl
@@ -207,9 +293,12 @@ export async function ProgramWorkspace({
                               programId={programId}
                               revision={revision}
                               operation="delete_workout"
-                              payload={{ workoutId: item.id, weekId: week.id }}
+                              payload={{
+                                workoutId: item.id,
+                                weekId: week.id,
+                              }}
                               label={`Remove Workout ${item.position}`}
-                              confirmation={`Remove Workout ${item.position} across all four weeks, including ${affected.length} exercises and ${sets} prescribed sets? Remaining workouts will be renumbered. This cannot be undone.`}
+                              confirmation={`Remove Workout ${item.position} across every week, including ${affected.length} exercises and ${sets} prescribed sets? Remaining workouts will be renumbered. This cannot be undone.`}
                               confirmLabel="Remove workouts"
                             />
                           </div>
@@ -218,17 +307,22 @@ export async function ProgramWorkspace({
                     );
                   })}
                 </div>
+
                 {workout && (
                   <div className="mt-5 border-t border-white/10 pt-4">
                     <h3 className="mb-3 font-semibold">
-                      Workout {workout.position} · This week&apos;s notes
+                      Workout {workout.position} · This
+                      week&apos;s notes
                     </h3>
+
                     <TemplateActionControl
                       key={`notes-${revision}`}
                       programId={programId}
                       revision={revision}
                       operation="workout_details"
-                      payload={{ workoutId: workout.id }}
+                      payload={{
+                        workoutId: workout.id,
+                      }}
                       label="Save workout notes"
                     >
                       <label className="block text-sm text-muted">
@@ -238,17 +332,22 @@ export async function ProgramWorkspace({
                           name="estimated_minutes"
                           min={1}
                           max={300}
-                          defaultValue={workout.estimated_minutes ?? ""}
+                          defaultValue={
+                            workout.estimated_minutes ?? ""
+                          }
                           className="mt-2 min-h-12 w-full rounded-lg border border-white/15 bg-black px-3 text-base"
                         />
                       </label>
+
                       <label className="my-4 block text-sm text-muted">
                         Warm-up notes (optional)
                         <textarea
                           name="warmup_notes"
                           maxLength={2000}
                           rows={3}
-                          defaultValue={workout.warmup_notes}
+                          defaultValue={
+                            workout.warmup_notes
+                          }
                           className="mt-2 w-full rounded-lg border border-white/15 bg-black p-3 text-base"
                         />
                       </label>
@@ -259,11 +358,14 @@ export async function ProgramWorkspace({
             )}
           </div>
         )}
+
         {fixed && week && week.week_number > 1 && (
           <div className="pb-1">
             <FormDialog
               key={`quick-copy-${week.id}-${revision}`}
-              title={`Copy Week ${week.week_number - 1} into Week ${week.week_number}`}
+              title={`Copy Week ${
+                week.week_number - 1
+              } into Week ${week.week_number}`}
               trigger={`Copy Week ${week.week_number - 1}`}
             >
               <div className="mt-4">
@@ -281,29 +383,33 @@ export async function ProgramWorkspace({
           </div>
         )}
       </header>
+
       {workout && week ? (
         <WorkoutEditor
-          key={`${workout.id}-${initialView}-${revision}`}
+          key={`${workout.id}-${revision}`}
           programId={programId}
           workout={workout}
-          week={week}
-          weeks={weeks}
-          exercises={allExercises.filter((e) =>
+
+          exercises={allExercises.filter((exercise) =>
             allWorkouts.some(
-              (w) =>
-                w.id === e.workout_id &&
-                w.progression_key === workout.progression_key,
+              (workoutItem) =>
+                workoutItem.id ===
+                  exercise.workout_id &&
+                workoutItem.progression_key ===
+                  workout.progression_key,
             ),
           )}
-          initialView={initialView}
           revision={revision}
           readOnly={!fixed}
         />
       ) : (
-        <div data-workspace-scroll className="min-h-0 flex-1 overflow-auto p-6">
+        <div
+          data-workspace-scroll
+          className="min-h-0 flex-1 overflow-auto p-6"
+        >
           <p className="hal-panel rounded-xl p-6 text-muted">
-            No workouts in this existing program. Create a four-week copy to
-            start building.
+            No workouts in this existing mesocycle. Create a
+            compatible copy to start building.
           </p>
         </div>
       )}

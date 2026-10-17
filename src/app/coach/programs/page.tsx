@@ -26,17 +26,17 @@ export default async function ProgramsPage() {
             </p>
 
             <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">
-              Programs
+              Templates
             </h1>
 
-            <p className="mt-3 text-muted">Your saved training programs.</p>
+            <p className="mt-3 text-muted">Reusable training templates for client mesocycles.</p>
           </div>
 
           <Link
             href="/coach/programs/new"
             className="inline-flex min-h-12 items-center justify-center rounded-lg bg-hal-red px-5 py-3 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 active:bg-hal-red-dark"
           >
-            Create program
+            Create template
           </Link>
         </header>
 
