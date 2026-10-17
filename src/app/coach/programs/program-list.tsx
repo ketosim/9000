@@ -35,7 +35,7 @@ export function ProgramList({ programs }: { programs: ProgramCard[] }) {
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search programs…"
+          placeholder="Search templates..."
           className="min-h-12 min-w-0 flex-1 rounded-lg border border-white/15 bg-panel px-4 text-base outline-none focus:border-hal-red-bright"
         />
         {query && (
@@ -49,7 +49,7 @@ export function ProgramList({ programs }: { programs: ProgramCard[] }) {
         )}
       </div>
       <div className="mt-8 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold">All programs</h2>
+        <h2 className="text-xl font-semibold">All templates</h2>
         <p role="status" className="text-sm text-muted">
           {matches.length} {query.trim() ? `of ${programs.length}` : ""}
         </p>
@@ -57,12 +57,12 @@ export function ProgramList({ programs }: { programs: ProgramCard[] }) {
       {matches.length === 0 ? (
         <div className="hal-panel mt-5 rounded-xl p-6">
           <h3 className="text-lg font-semibold">
-            {programs.length ? "No matching programmes" : "No programs yet"}
+            {programs.length ? "No matching templates" : "No templates yet"}
           </h3>
           <p className="mt-2 text-sm text-muted">
             {programs.length
               ? "Try another title or clear the search."
-              : "Create your first program to start building your training library."}
+              : "Create your first template to start building your training library."}
           </p>
         </div>
       ) : (
