@@ -24,7 +24,7 @@ export function WorkoutOrderControls({
   });
   const index = order.indexOf(workoutId);
   const buttonClass =
-    "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/15 bg-panel px-3 text-sm text-foreground transition hover:bg-panel-light active:bg-panel-light disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400";
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-blue-200 bg-panel px-3 text-sm text-foreground transition hover:bg-panel-light active:bg-panel-light disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue";
 
   return (
     <form

@@ -45,9 +45,9 @@ export function CoachNavigation({
       {/* Tablet and desktop sidebar */}
       <aside
         id="coach-sidebar"
-        className={`sticky top-0 hidden h-dvh border-r border-white/10 bg-black ${sidebarVisible ? "md:flex md:flex-col md:p-6" : ""}`}
+        className={`sticky top-0 hidden h-dvh border-r border-blue-100 bg-panel ${sidebarVisible ? "md:flex md:flex-col md:p-6" : ""}`}
       >
-        <p className="text-xl font-bold tracking-[0.16em] text-white">9000</p>
+        <p className="text-xl font-bold tracking-[0.16em] text-foreground">9000</p>
 
         <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted">
           Coach
@@ -63,8 +63,8 @@ export function CoachNavigation({
                 href={item.href}
                 className={`flex min-h-12 items-center gap-4 rounded-lg px-4 transition ${
                   active
-                    ? "bg-panel-light text-white"
-                    : "text-muted hover:bg-panel hover:text-white"
+                    ? "bg-panel-light text-foreground"
+                    : "text-muted hover:bg-panel-light hover:text-foreground"
                 }`}
               >
                 <span
@@ -84,7 +84,7 @@ export function CoachNavigation({
 
       {/* Phone bottom navigation */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-blue-100 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
         aria-label="Coach navigation"
       >
         <div className="mx-auto grid max-w-lg grid-cols-4">
@@ -96,7 +96,7 @@ export function CoachNavigation({
                 key={item.href}
                 href={item.href}
                 className={`relative flex min-h-16 flex-col items-center justify-center gap-1 px-1 text-[11px] transition ${
-                  active ? "text-white" : "text-muted"
+                  active ? "text-foreground" : "text-muted"
                 }`}
               >
                 {active && (

@@ -27,7 +27,7 @@ export function BlockOptions({
               required={required}
               className="peer sr-only"
             />
-            <span className="flex min-h-12 min-w-12 items-center justify-center rounded-lg border border-white/15 bg-black px-4 py-3 text-sm text-muted peer-checked:border-hal-red peer-checked:bg-hal-red/10 peer-checked:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-red-400 peer-disabled:cursor-wait">
+            <span className="flex min-h-12 min-w-12 items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm text-muted peer-checked:border-hal-red peer-checked:bg-hal-red/10 peer-checked:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-blue peer-disabled:cursor-wait">
               {option.label}
             </span>
           </label>

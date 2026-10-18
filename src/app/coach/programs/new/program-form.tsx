@@ -15,10 +15,10 @@ const initialState: ProgramFormState = {
 };
 
 const inputClass =
-  "min-h-12 w-full rounded-lg border border-white/15 bg-black px-4 py-3 text-base text-foreground outline-none transition placeholder:text-zinc-600 focus:border-red-400 focus:ring-1 focus:ring-red-400";
+  "min-h-12 w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-base text-foreground outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue";
 
 const labelClass =
-  "mb-2 block text-sm font-medium text-zinc-300";
+  "mb-2 block text-sm font-medium text-slate-700";
 
 export function ProgramForm({
   programId,
@@ -135,7 +135,7 @@ export function ProgramForm({
         <button
           type="submit"
           disabled={pending}
-          className="min-h-12 w-full rounded-lg bg-hal-red px-6 py-3 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 active:bg-hal-red-dark disabled:cursor-wait disabled:opacity-60"
+          className="min-h-12 w-full rounded-lg bg-hal-red px-6 py-3 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-blue active:bg-hal-red-dark disabled:cursor-wait disabled:opacity-60"
         >
           {pending ? "Creating…" : "Create draft"}
         </button>

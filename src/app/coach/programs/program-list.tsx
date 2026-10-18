@@ -75,7 +75,7 @@ export function ProgramList({ programs }: { programs: ProgramCard[] }) {
               <Link
                 href={`/coach/programs/${program.id}/builder`}
                 aria-label={`Open workouts for ${program.name}`}
-                className="group block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 after:absolute after:inset-0 after:rounded-xl"
+                className="group block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-blue after:absolute after:inset-0 after:rounded-xl"
               >
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   {program.status}

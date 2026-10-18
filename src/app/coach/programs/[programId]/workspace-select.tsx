@@ -87,7 +87,7 @@ export function WorkspaceSelect({ label, value, options }: Props) {
                 px-4 py-3 transition-colors
                 focus-visible:outline-2
                 focus-visible:outline-offset-2
-                focus-visible:outline-red-400
+                focus-visible:outline-brand-blue
                 disabled:cursor-wait
                 ${
                   isWorkout

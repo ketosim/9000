@@ -31,7 +31,7 @@ const initialState: BuilderState = {
 };
 
 const inputClass =
-  "mt-2 min-h-12 w-full rounded-lg border border-white/15 bg-black px-3 py-3 text-base text-foreground outline-none focus:border-hal-red-bright";
+  "mt-2 min-h-12 w-full rounded-lg border border-blue-200 bg-white px-3 py-3 text-base text-foreground outline-none focus:border-brand-blue";
 
 export function BuilderForm({
   mode,

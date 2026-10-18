@@ -20,7 +20,7 @@ export default async function ProgramLayout({
             <CoachMenuButton />
             <Link
               href="/coach/programs"
-              className="inline-flex min-h-12 items-center rounded-md px-2 text-sm text-muted focus-visible:outline-2 focus-visible:outline-red-400"
+              className="inline-flex min-h-12 items-center rounded-md px-2 text-sm text-muted focus-visible:outline-2 focus-visible:outline-brand-blue"
             >
               ← Programs
             </Link>

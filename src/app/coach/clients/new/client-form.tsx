@@ -13,7 +13,7 @@ const initialState: CreateClientState = {
 };
 
 const inputClass =
-  "mt-2 min-h-12 w-full rounded-xl border border-white/15 bg-black px-4 py-3 text-base text-foreground outline-none placeholder:text-muted focus:border-hal-red-bright focus:ring-1 focus:ring-hal-red-bright";
+  "mt-2 min-h-12 w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-base text-foreground outline-none placeholder:text-slate-400 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue";
 
 export function ClientForm() {
   const [state, formAction, pending] = useActionState(
@@ -107,7 +107,7 @@ export function ClientForm() {
       {state.message && (
         <p
           role={state.status === "success" ? "status" : "alert"}
-          className="mt-5 rounded-xl border border-white/15 bg-black/40 p-4 text-sm leading-6 text-foreground"
+          className="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-foreground"
         >
           {state.message}
         </p>

@@ -56,7 +56,7 @@ export default async function LoginPage({
                 minLength={3}
                 maxLength={30}
                 placeholder="Enter your username"
-                className="min-h-12 w-full rounded-lg border border-white/15 bg-black px-4 py-3 text-base text-foreground outline-none transition placeholder:text-zinc-700 focus:border-hal-red focus:ring-1 focus:ring-hal-red"
+                className="min-h-12 w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-base text-foreground outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
               />
             </div>
 
@@ -76,7 +76,7 @@ export default async function LoginPage({
                 required
                 minLength={8}
                 placeholder="••••••••"
-                className="min-h-12 w-full rounded-lg border border-white/15 bg-black px-4 py-3 text-base text-foreground outline-none transition placeholder:text-zinc-700 focus:border-hal-red focus:ring-1 focus:ring-hal-red"
+                className="min-h-12 w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-base text-foreground outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
               />
             </div>
 

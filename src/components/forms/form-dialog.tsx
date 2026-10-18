@@ -55,7 +55,7 @@ export function FormDialog({
           setRenderContent(true);
           dialog.current?.showModal();
         }}
-        className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 ${primary ? "bg-hal-red text-white" : "border border-white/15 text-hal-red-bright hover:bg-white/5"}`}
+        className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue ${primary ? "bg-hal-red text-white" : "border border-blue-200 text-hal-red-bright hover:bg-blue-50"}`}
       >
         {trigger}
       </button>

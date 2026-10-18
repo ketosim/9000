@@ -39,7 +39,7 @@ export default async function CoachClientsPage() {
 
           <Link
             href="/coach/clients/new"
-            className="inline-flex min-h-12 items-center justify-center rounded-xl bg-hal-red px-5 py-3 font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 active:scale-[0.98] active:bg-hal-red-dark"
+            className="inline-flex min-h-12 items-center justify-center rounded-xl bg-hal-red px-5 py-3 font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-blue active:scale-[0.98] active:bg-hal-red-dark"
           >
             Add client
           </Link>
@@ -84,7 +84,7 @@ export default async function CoachClientsPage() {
                   <Link
                     key={client.id}
                     href={`/coach/clients/${client.id}`}
-                    className="hal-panel group min-h-36 rounded-xl p-5 transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 active:scale-[0.99]"
+                    className="hal-panel group min-h-36 rounded-xl p-5 transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-blue active:scale-[0.99]"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">

@@ -31,7 +31,7 @@ export function TemplateActionControl({
     message: "",
   });
   const button =
-    "min-h-11 rounded-lg border border-white/15 px-3 text-sm font-medium text-foreground transition hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 disabled:cursor-wait disabled:opacity-40";
+    "min-h-11 rounded-lg border border-blue-200 px-3 text-sm font-medium text-foreground transition hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue disabled:cursor-wait disabled:opacity-40";
   return (
     <form aria-busy={pending} action={action} aria-label={label}>
       <input type="hidden" name="programId" value={programId} />

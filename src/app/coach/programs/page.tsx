@@ -34,7 +34,7 @@ export default async function ProgramsPage() {
 
           <Link
             href="/coach/programs/new"
-            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-hal-red px-5 py-3 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 active:bg-hal-red-dark"
+            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-hal-red px-5 py-3 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-blue active:bg-hal-red-dark"
           >
             Create template
           </Link>

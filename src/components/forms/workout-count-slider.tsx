@@ -23,7 +23,7 @@ export function WorkoutCountSlider({
       <div className="flex items-center justify-between gap-4">
         <label
           htmlFor={id}
-          className="text-sm font-medium text-zinc-300"
+          className="text-sm font-medium text-slate-700"
         >
           Workouts per week
         </label>
@@ -49,7 +49,7 @@ export function WorkoutCountSlider({
         onChange={(event) =>
           onChange(Number(event.target.value))
         }
-        className="mt-3 h-12 w-full cursor-pointer accent-red-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 disabled:cursor-wait"
+        className="mt-3 h-12 w-full cursor-pointer accent-brand-blue focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-blue disabled:cursor-wait"
       />
 
       <div

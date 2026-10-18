@@ -51,7 +51,7 @@ export function CoachMenuButton() {
       onClick={toggle}
       aria-expanded={open}
       aria-controls="coach-sidebar"
-      className="hidden min-h-11 items-center gap-2 rounded-lg border border-white/15 px-3 text-sm text-muted hover:text-white focus-visible:outline-2 focus-visible:outline-red-400 md:inline-flex"
+      className="hidden min-h-11 items-center gap-2 rounded-lg border border-blue-200 px-3 text-sm text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand-blue md:inline-flex"
     >
       <span aria-hidden="true">☰</span> Menu
     </button>

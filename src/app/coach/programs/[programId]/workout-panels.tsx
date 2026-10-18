@@ -49,7 +49,7 @@ export function WorkoutPanels({
         data-workspace-scroll
         tabIndex={0}
         aria-label="Workout exercises"
-        className="min-h-0 flex-1 overflow-auto overscroll-contain px-4 py-5 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-red-400 sm:px-6"
+        className="min-h-0 flex-1 overflow-auto overscroll-contain px-4 py-5 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-brand-blue sm:px-6"
       >
         {exercises}
       </div>

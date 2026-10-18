@@ -20,9 +20,9 @@ type EditProgramFormProps = {
 };
 
 const inputClass =
-  "min-h-12 w-full rounded-lg border border-white/15 bg-black px-4 py-3 text-base text-foreground outline-none transition focus:border-red-400 focus:ring-1 focus:ring-red-400";
+  "min-h-12 w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-base text-foreground outline-none transition focus:border-brand-blue focus:ring-1 focus:ring-brand-blue";
 
-const labelClass = "mb-2 block text-sm font-medium text-zinc-300";
+const labelClass = "mb-2 block text-sm font-medium text-slate-700";
 
 const statusOptions = [
   { value: "draft", label: "Draft" },
@@ -191,7 +191,7 @@ export function EditProgramForm({
               value={originalWorkoutCount}
             />
 
-            <p className="rounded-lg border border-white/10 bg-black/30 p-4 text-sm leading-relaxed text-muted">
+            <p className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm leading-relaxed text-muted">
               This older mesocycle is preserved in its current
               structure. Duplicate it from the Mesocycles page to use
               the variable-duration builder.
@@ -220,7 +220,7 @@ export function EditProgramForm({
                     className="peer sr-only"
                   />
 
-                  <span className="flex min-h-14 items-center justify-center rounded-xl border border-white/15 bg-black px-3 py-3 text-sm font-medium text-muted transition peer-checked:border-hal-red peer-checked:bg-hal-red/10 peer-checked:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-red-400">
+                  <span className="flex min-h-14 items-center justify-center rounded-xl border border-blue-200 bg-white px-3 py-3 text-sm font-medium text-muted transition peer-checked:border-hal-red peer-checked:bg-hal-red/10 peer-checked:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-blue">
                     {option.label}
                   </span>
                 </label>
@@ -312,7 +312,7 @@ export function EditProgramForm({
         <button
           type="submit"
           disabled={pending}
-          className="min-h-12 w-full rounded-lg bg-hal-red px-6 py-3 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-400 active:bg-hal-red-dark disabled:cursor-wait disabled:opacity-60"
+          className="min-h-12 w-full rounded-lg bg-hal-red px-6 py-3 font-semibold text-white transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-blue active:bg-hal-red-dark disabled:cursor-wait disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save changes"}
         </button>

@@ -335,7 +335,7 @@ export async function ProgramWorkspace({
                           defaultValue={
                             workout.estimated_minutes ?? ""
                           }
-                          className="mt-2 min-h-12 w-full rounded-lg border border-white/15 bg-black px-3 text-base"
+                          className="mt-2 min-h-12 w-full rounded-lg border border-blue-200 bg-white px-3 text-base text-foreground"
                         />
                       </label>
 
@@ -348,7 +348,7 @@ export async function ProgramWorkspace({
                           defaultValue={
                             workout.warmup_notes
                           }
-                          className="mt-2 w-full rounded-lg border border-white/15 bg-black p-3 text-base"
+                          className="mt-2 w-full rounded-lg border border-blue-200 bg-white p-3 text-base text-foreground"
                         />
                       </label>
                     </TemplateActionControl>

@@ -33,7 +33,7 @@ export function ProgramTabs({ programId }: { programId: string }) {
           key={tab.label}
           href={tab.href}
           aria-current={tab.active ? "page" : undefined}
-          className={`inline-flex min-h-12 items-center justify-center border-b-2 px-5 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-red-400 sm:min-w-32 ${
+          className={`inline-flex min-h-12 items-center justify-center border-b-2 px-5 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-brand-blue sm:min-w-32 ${
             tab.active
               ? "border-hal-red text-foreground"
               : "border-transparent text-muted hover:text-foreground"
