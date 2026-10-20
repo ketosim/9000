@@ -21,6 +21,11 @@ export type TemplateAssignmentState = {
   message: string;
 };
 
+export type TemplateUnassignmentState = {
+  status: "idle" | "error" | "success";
+  message: string;
+};
+
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -209,6 +214,63 @@ export async function assignTrainingTemplate(
       status: "error",
       message:
         "Could not confirm the assignment. Check your connection and try again.",
+    };
+  }
+}
+
+export async function unassignTrainingTemplate(
+  _previousState: TemplateUnassignmentState,
+  formData: FormData,
+): Promise<TemplateUnassignmentState> {
+  const clientId = String(formData.get("clientId") ?? "");
+  const assignmentId = String(formData.get("assignmentId") ?? "");
+
+  if (!uuidPattern.test(clientId) || !uuidPattern.test(assignmentId)) {
+    return {
+      status: "error",
+      message: "Invalid assignment. Refresh the client page and try again.",
+    };
+  }
+
+  try {
+    const admin = await createCoachAdminClient();
+    const { error } = await admin.rpc("unassign_training_template", {
+      p_coach_id: process.env.COACH_USER_ID!,
+      p_assignment_id: assignmentId,
+    });
+
+    if (error) {
+      console.error("Training template unassignment failed", {
+        code: error.code,
+        message: error.message,
+      });
+
+      const messages: Record<string, string> = {
+        ASSIGNMENT_UNAVAILABLE:
+          "This assignment is unavailable. Refresh the client page and try again.",
+        MESOCYCLE_NOT_DRAFT:
+          "Only templates in a draft mesocycle can be unassigned.",
+      };
+
+      return {
+        status: "error",
+        message:
+          messages[error.message] ??
+          "Could not unassign the training template. Please try again.",
+      };
+    }
+
+    revalidatePath(`/coach/clients/${clientId}`);
+
+    return {
+      status: "success",
+      message: "Training template unassigned.",
+    };
+  } catch {
+    return {
+      status: "error",
+      message:
+        "Could not confirm the change. Check your connection and try again.",
     };
   }
 }

@@ -6,6 +6,7 @@ import {
   TemplateAssignmentForm,
   type AssignableTemplate,
 } from "./template-assignment-form";
+import { TemplateUnassignForm } from "./template-unassign-form";
 
 type ClientDetailPageProps = {
   params: Promise<{
@@ -380,6 +381,15 @@ export default async function ClientDetailPage({
                                         : "workouts"}{" "}
                                       per week
                                     </p>
+
+                                    {mesocycle.status === "draft" && (
+                                      <TemplateUnassignForm
+                                        clientId={clientId}
+                                        assignmentId={assignment.id}
+                                        templateName={assignment.template_name}
+                                        durationWeeks={assignment.duration_weeks}
+                                      />
+                                    )}
                                   </li>
                                 ))}
                               </ul>
