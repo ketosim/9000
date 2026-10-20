@@ -16,6 +16,11 @@ export type TrainingBlockState = {
   values?: TrainingBlockValues;
 };
 
+export type TemplateAssignmentState = {
+  status: "idle" | "error" | "success";
+  message: string;
+};
+
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -129,5 +134,81 @@ export async function createTrainingBlock(
     return fail(
       "Could not confirm the save. Check your connection and try again.",
     );
+  }
+}
+
+function assignmentError(message: string) {
+  const errors: Record<string, string> = {
+    MESOCYCLE_UNAVAILABLE:
+      "This mesocycle is unavailable. Refresh the client page and try again.",
+    TEMPLATE_UNAVAILABLE:
+      "This training template is unavailable. Refresh the client page and choose another template.",
+    TEMPLATE_NOT_ACTIVE:
+      "Only active training templates can be assigned.",
+    TEMPLATE_ALREADY_ASSIGNED:
+      "This training template is already assigned to the mesocycle.",
+    MESOCYCLE_DURATION_MISMATCH:
+      "Choose a template with the same duration as the other templates in this mesocycle.",
+    ASSIGNMENT_LIMIT:
+      "This mesocycle has reached its template assignment limit.",
+  };
+
+  return (
+    errors[message] ??
+    "Could not assign the training template. Please try again."
+  );
+}
+
+export async function assignTrainingTemplate(
+  _previousState: TemplateAssignmentState,
+  formData: FormData,
+): Promise<TemplateAssignmentState> {
+  const clientId = String(formData.get("clientId") ?? "");
+  const mesocycleId = String(formData.get("mesocycleId") ?? "");
+  const programId = String(formData.get("programId") ?? "");
+
+  if (
+    !uuidPattern.test(clientId) ||
+    !uuidPattern.test(mesocycleId) ||
+    !uuidPattern.test(programId)
+  ) {
+    return {
+      status: "error",
+      message: "Invalid assignment. Refresh the client page and try again.",
+    };
+  }
+
+  try {
+    const admin = await createCoachAdminClient();
+    const { error } = await admin.rpc("assign_training_template", {
+      p_coach_id: process.env.COACH_USER_ID!,
+      p_mesocycle_id: mesocycleId,
+      p_program_id: programId,
+    });
+
+    if (error) {
+      console.error("Training template assignment failed", {
+        code: error.code,
+        message: error.message,
+      });
+
+      return {
+        status: "error",
+        message: assignmentError(error.message),
+      };
+    }
+
+    revalidatePath(`/coach/clients/${clientId}`);
+
+    return {
+      status: "success",
+      message: "Training template assigned.",
+    };
+  } catch {
+    return {
+      status: "error",
+      message:
+        "Could not confirm the assignment. Check your connection and try again.",
+    };
   }
 }

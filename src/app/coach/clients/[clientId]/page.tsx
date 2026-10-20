@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createCoachAdminClient } from "@/lib/supabase/admin";
 import { TrainingBlockForm } from "./training-block-form";
+import {
+  TemplateAssignmentForm,
+  type AssignableTemplate,
+} from "./template-assignment-form";
 
 type ClientDetailPageProps = {
   params: Promise<{
@@ -11,6 +15,7 @@ type ClientDetailPageProps = {
 
 type AssignedTemplate = {
   id: string;
+  source_program_id: string | null;
   template_name: string;
   duration_weeks: number;
   sessions_per_week: number;
@@ -64,7 +69,7 @@ export default async function ClientDetailPage({
 
   const admin = await createCoachAdminClient();
 
-  const [clientResult, blocksResult] = await Promise.all([
+  const [clientResult, blocksResult, templatesResult] = await Promise.all([
     admin
       .from("profiles")
       .select("id, username, display_name, created_at")
@@ -91,6 +96,7 @@ export default async function ClientDetailPage({
             starts_on,
             assigned_training_templates (
               id,
+              source_program_id,
               template_name,
               duration_weeks,
               sessions_per_week,
@@ -102,6 +108,13 @@ export default async function ClientDetailPage({
       .eq("client_id", clientId)
       .eq("created_by", process.env.COACH_USER_ID!)
       .order("position", { ascending: true }),
+
+    admin
+      .from("programs")
+      .select("id, name, duration_weeks, sessions_per_week")
+      .eq("created_by", process.env.COACH_USER_ID!)
+      .eq("status", "active")
+      .order("name", { ascending: true }),
   ]);
 
   if (clientResult.error) {
@@ -118,8 +131,15 @@ export default async function ClientDetailPage({
     );
   }
 
+  if (templatesResult.error) {
+    throw new Error(
+      "Could not load active training templates. Please try again.",
+    );
+  }
+
   const client = clientResult.data;
   const blocks = (blocksResult.data ?? []) as TrainingBlock[];
+  const activeTemplates = (templatesResult.data ?? []) as AssignableTemplate[];
 
   const name =
     client.display_name?.trim() ||
@@ -293,6 +313,20 @@ export default async function ClientDetailPage({
                           (first, second) =>
                             first.position - second.position,
                         );
+                        const assignedProgramIds = new Set(
+                          assignments.flatMap((assignment) =>
+                            assignment.source_program_id
+                              ? [assignment.source_program_id]
+                              : [],
+                          ),
+                        );
+                        const compatibleTemplates = activeTemplates.filter(
+                          (template) =>
+                            !assignedProgramIds.has(template.id) &&
+                            (mesocycle.duration_weeks === null ||
+                              template.duration_weeks ===
+                                mesocycle.duration_weeks),
+                        );
 
                         return (
                           <section
@@ -350,6 +384,13 @@ export default async function ClientDetailPage({
                                 ))}
                               </ul>
                             )}
+
+                            <TemplateAssignmentForm
+                              clientId={clientId}
+                              mesocycleId={mesocycle.id}
+                              durationWeeks={mesocycle.duration_weeks}
+                              templates={compatibleTemplates}
+                            />
                           </section>
                         );
                       })}
