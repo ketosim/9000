@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createCoachAdminClient } from "@/lib/supabase/admin";
 import { TrainingBlockForm } from "./training-block-form";
+import { TrainingBlockEditForm } from "./training-block-edit-form";
+import { MesocycleEditForm } from "./mesocycle-edit-form";
 import {
   TemplateAssignmentForm,
   type AssignableTemplate,
@@ -44,7 +46,7 @@ type TrainingBlock = {
 };
 
 const uuidPattern =
-/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -70,56 +72,61 @@ export default async function ClientDetailPage({
 
   const admin = await createCoachAdminClient();
 
-  const [clientResult, blocksResult, templatesResult] = await Promise.all([
-    admin
-      .from("profiles")
-      .select("id, username, display_name, created_at")
-      .eq("id", clientId)
-      .eq("role", "client")
-      .maybeSingle(),
+  const [clientResult, blocksResult, templatesResult] =
+    await Promise.all([
+      admin
+        .from("profiles")
+        .select("id, username, display_name, created_at")
+        .eq("id", clientId)
+        .eq("role", "client")
+        .maybeSingle(),
 
-    admin
-      .from("training_blocks")
-      .select(
-        `
-          id,
-          name,
-          description,
-          position,
-          status,
-          starts_on,
-          client_mesocycles (
+      admin
+        .from("training_blocks")
+        .select(
+          `
             id,
             name,
+            description,
             position,
-            duration_weeks,
             status,
             starts_on,
-            assigned_training_templates (
+            client_mesocycles (
               id,
-              source_program_id,
-              template_name,
+              name,
+              position,
               duration_weeks,
-              sessions_per_week,
-              position
+              status,
+              starts_on,
+              assigned_training_templates (
+                id,
+                source_program_id,
+                template_name,
+                duration_weeks,
+                sessions_per_week,
+                position
+              )
             )
-          )
-        `,
-      )
-      .eq("client_id", clientId)
-      .eq("created_by", process.env.COACH_USER_ID!)
-      .order("position", { ascending: true }),
+          `,
+        )
+        .eq("client_id", clientId)
+        .eq("created_by", process.env.COACH_USER_ID!)
+        .order("position", { ascending: true }),
 
-    admin
-      .from("programs")
-      .select("id, name, duration_weeks, sessions_per_week")
-      .eq("created_by", process.env.COACH_USER_ID!)
-      .eq("status", "active")
-      .order("name", { ascending: true }),
-  ]);
+      admin
+        .from("programs")
+        .select(
+          "id, name, duration_weeks, sessions_per_week",
+        )
+        .eq("created_by", process.env.COACH_USER_ID!)
+        .eq("status", "active")
+        .order("name", { ascending: true }),
+    ]);
 
   if (clientResult.error) {
-    throw new Error("Could not load this client. Please try again.");
+    throw new Error(
+      "Could not load this client. Please try again.",
+    );
   }
 
   if (!clientResult.data) {
@@ -139,8 +146,11 @@ export default async function ClientDetailPage({
   }
 
   const client = clientResult.data;
+
   const blocks = (blocksResult.data ?? []) as TrainingBlock[];
-  const activeTemplates = (templatesResult.data ?? []) as AssignableTemplate[];
+
+  const activeTemplates = (templatesResult.data ??
+    []) as AssignableTemplate[];
 
   const name =
     client.display_name?.trim() ||
@@ -228,6 +238,7 @@ export default async function ClientDetailPage({
           <details className="hal-panel mt-5 rounded-2xl">
             <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-4 rounded-2xl px-5 py-4 font-semibold text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-500 sm:px-6">
               Create training block
+
               <span aria-hidden="true" className="text-xl">
                 +
               </span>
@@ -252,7 +263,9 @@ export default async function ClientDetailPage({
           ) : (
             <div className="mt-5 space-y-5">
               {blocks.map((block) => {
-                const mesocycles = [...block.client_mesocycles].sort(
+                const mesocycles = [
+                  ...block.client_mesocycles,
+                ].sort(
                   (first, second) =>
                     first.position - second.position,
                 );
@@ -290,6 +303,7 @@ export default async function ClientDetailPage({
                           <dt className="text-xs text-muted">
                             Starts
                           </dt>
+
                           <dd className="mt-1 font-medium">
                             {formatDate(block.starts_on)}
                           </dd>
@@ -299,11 +313,22 @@ export default async function ClientDetailPage({
                           <dt className="text-xs text-muted">
                             Mesocycles
                           </dt>
+
                           <dd className="mt-1 font-medium">
                             {mesocycles.length}
                           </dd>
                         </div>
                       </dl>
+
+                      <TrainingBlockEditForm
+                        clientId={clientId}
+                        blockId={block.id}
+                        initialName={block.name}
+                        initialDescription={block.description}
+                        initialStartsOn={block.starts_on}
+                        initialMesocycleCount={mesocycles.length}
+                        blockStatus={block.status}
+                      />
                     </header>
 
                     <div className="grid gap-4 p-5 sm:p-6 lg:grid-cols-3">
@@ -314,6 +339,7 @@ export default async function ClientDetailPage({
                           (first, second) =>
                             first.position - second.position,
                         );
+
                         const assignedProgramIds = new Set(
                           assignments.flatMap((assignment) =>
                             assignment.source_program_id
@@ -321,13 +347,15 @@ export default async function ClientDetailPage({
                               : [],
                           ),
                         );
-                        const compatibleTemplates = activeTemplates.filter(
-                          (template) =>
-                            !assignedProgramIds.has(template.id) &&
-                            (mesocycle.duration_weeks === null ||
-                              template.duration_weeks ===
-                                mesocycle.duration_weeks),
-                        );
+
+                        const compatibleTemplates =
+                          activeTemplates.filter(
+                            (template) =>
+                              !assignedProgramIds.has(template.id) &&
+                              (mesocycle.duration_weeks === null ||
+                                template.duration_weeks ===
+                                  mesocycle.duration_weeks),
+                          );
 
                         return (
                           <section
@@ -356,6 +384,19 @@ export default async function ClientDetailPage({
                                 : "Duration set by first template"}
                             </p>
 
+                            <p className="mt-1 text-xs text-muted">
+                              Starts:{" "}
+                              {formatDate(mesocycle.starts_on)}
+                            </p>
+
+                            <MesocycleEditForm
+                              clientId={clientId}
+                              mesocycleId={mesocycle.id}
+                              initialName={mesocycle.name}
+                              initialStartsOn={mesocycle.starts_on}
+                              mesocycleStatus={mesocycle.status}
+                            />
+
                             {assignments.length === 0 ? (
                               <div className="mt-4 rounded-lg border border-dashed border-blue-200 bg-white/70 p-3">
                                 <p className="text-sm text-muted">
@@ -374,9 +415,13 @@ export default async function ClientDetailPage({
                                     </p>
 
                                     <p className="mt-1 text-xs text-muted">
-                                      {assignment.duration_weeks} weeks ·{" "}
-                                      {assignment.sessions_per_week}{" "}
-                                      {assignment.sessions_per_week === 1
+                                      {assignment.duration_weeks}{" "}
+                                      weeks ·{" "}
+                                      {
+                                        assignment.sessions_per_week
+                                      }{" "}
+                                      {assignment.sessions_per_week ===
+                                      1
                                         ? "workout"
                                         : "workouts"}{" "}
                                       per week
@@ -386,8 +431,12 @@ export default async function ClientDetailPage({
                                       <TemplateUnassignForm
                                         clientId={clientId}
                                         assignmentId={assignment.id}
-                                        templateName={assignment.template_name}
-                                        durationWeeks={assignment.duration_weeks}
+                                        templateName={
+                                          assignment.template_name
+                                        }
+                                        durationWeeks={
+                                          assignment.duration_weeks
+                                        }
                                       />
                                     )}
                                   </li>
@@ -395,12 +444,16 @@ export default async function ClientDetailPage({
                               </ul>
                             )}
 
-                            <TemplateAssignmentForm
-                              clientId={clientId}
-                              mesocycleId={mesocycle.id}
-                              durationWeeks={mesocycle.duration_weeks}
-                              templates={compatibleTemplates}
-                            />
+                            {mesocycle.status === "draft" && (
+                              <TemplateAssignmentForm
+                                clientId={clientId}
+                                mesocycleId={mesocycle.id}
+                                durationWeeks={
+                                  mesocycle.duration_weeks
+                                }
+                                templates={compatibleTemplates}
+                              />
+                            )}
                           </section>
                         );
                       })}
@@ -428,6 +481,7 @@ export default async function ClientDetailPage({
               <dt className="text-xs uppercase tracking-[0.12em] text-muted">
                 Display name
               </dt>
+
               <dd className="mt-2 break-words">
                 {client.display_name?.trim() || "Not set"}
               </dd>
@@ -437,6 +491,7 @@ export default async function ClientDetailPage({
               <dt className="text-xs uppercase tracking-[0.12em] text-muted">
                 Username
               </dt>
+
               <dd className="mt-2 break-words">
                 {client.username || "Not set"}
               </dd>
@@ -446,6 +501,7 @@ export default async function ClientDetailPage({
               <dt className="text-xs uppercase tracking-[0.12em] text-muted">
                 Account type
               </dt>
+
               <dd className="mt-2">Client</dd>
             </div>
 
@@ -453,6 +509,7 @@ export default async function ClientDetailPage({
               <dt className="text-xs uppercase tracking-[0.12em] text-muted">
                 Joined
               </dt>
+
               <dd className="mt-2">{joined}</dd>
             </div>
           </dl>

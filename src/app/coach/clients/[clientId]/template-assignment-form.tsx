@@ -83,18 +83,14 @@ export function TemplateAssignmentForm({
         {pending ? "Assigning…" : "Assign template"}
       </button>
 
-      {state.message && (
-        <p
-          role={state.status === "error" ? "alert" : "status"}
-          className={`rounded-lg border p-3 text-xs ${
-            state.status === "error"
-              ? "border-red-300 bg-red-50 text-red-700"
-              : "border-blue-200 bg-blue-50 text-blue-800"
-          }`}
-        >
-          {state.message}
-        </p>
-      )}
+        {state.status === "error" && (
+          <p
+            role="alert"
+            className="rounded-lg border border-red-300 bg-red-50 p-3 text-xs text-red-700"
+          >
+            {state.message}
+          </p>
+        )}
     </form>
   );
 }
