@@ -141,51 +141,76 @@ function assignmentError(message: string) {
 
 function trainingStatusError(message: string) {
   const errors: Record<string, string> = {
-    INVALID_STATUS:
-      "Choose a valid status.",
+    INVALID_STATUS: "Choose a valid status.",
+
     COACH_UNAVAILABLE:
       "Your coach account could not be verified.",
+
     CLIENT_UNAVAILABLE:
       "This client is unavailable. Return to Clients and try again.",
+
     BLOCK_UNAVAILABLE:
       "This training block is unavailable. Refresh the page and try again.",
+
     BLOCK_ARCHIVED:
       "An archived training block cannot be activated.",
+
     BLOCK_ALREADY_STARTED:
       "This training block has already started and cannot return to draft.",
-    BLOCK_START_DATE_REQUIRED:
-      "Add a start date before activating this training block.",
+
     BLOCK_HAS_NO_MESOCYCLES:
       "Add at least one mesocycle before activating this training block.",
-    BLOCK_MESOCYCLES_NOT_ACTIVE:
-      "Every mesocycle must be active before the training block can be activated.",
-    BLOCK_START_MISMATCH:
-      "The training block start date must match the first mesocycle start date.",
+
+    BLOCK_FIRST_MESOCYCLE_MISSING:
+      "This training block does not have a first mesocycle.",
+
+    BLOCK_FIRST_MESOCYCLE_NOT_ACTIVE:
+      "Activate the first mesocycle before activating this training block.",
+
+    FIRST_MESOCYCLE_START_DATE_REQUIRED:
+      "Add a start date to the first mesocycle before activating this training block.",
+
+    FIRST_MESOCYCLE_DURATION_REQUIRED:
+      "Set the first mesocycle duration before activating this training block.",
+
+    FIRST_MESOCYCLE_TEMPLATE_REQUIRED:
+      "Assign at least one training template to the first mesocycle before activating this training block.",
+
     ACTIVE_BLOCK_STRUCTURE_LOCKED:
       "This training block is active. Change it to draft before changing its structure.",
+
     CLIENT_ALREADY_HAS_ACTIVE_BLOCK:
       "This client already has an active training block. Archive or complete it before activating another.",
+
     MESOCYCLE_UNAVAILABLE:
       "This mesocycle is unavailable. Refresh the page and try again.",
+
     MESOCYCLE_START_DATE_REQUIRED:
       "Add a start date before activating this mesocycle.",
+
     MESOCYCLE_DURATION_REQUIRED:
       "Set the mesocycle duration before activating it.",
+
     MESOCYCLE_TEMPLATE_REQUIRED:
       "Assign at least one training template before activating this mesocycle.",
+
     MESOCYCLE_DURATION_MISMATCH:
       "Every assigned template must match the mesocycle duration.",
+
     MESOCYCLE_BEFORE_BLOCK:
       "The mesocycle cannot start before its training block.",
+
     MESOCYCLE_DATE_OVERLAP:
       "This mesocycle overlaps another mesocycle in the training block.",
   };
 
   return (
     errors[message] ??
-    "Could not change the training status. Please try again."
+    "Could not change the training status. Refresh the page and try again."
   );
 }
+
+
 
 function validTrainingStatus(
   status: string,
