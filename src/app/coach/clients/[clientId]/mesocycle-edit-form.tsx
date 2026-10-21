@@ -7,7 +7,7 @@ import {
 } from "./actions";
 
 const inputClass =
-  "min-h-11 w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
+  "min-h-11 w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
 
 const labelClass =
   "mb-2 block text-xs font-medium text-slate-700";
@@ -16,12 +16,14 @@ export function MesocycleEditForm({
   clientId,
   mesocycleId,
   initialName,
+  initialDurationWeeks,
   initialStartsOn,
   mesocycleStatus,
 }: {
   clientId: string;
   mesocycleId: string;
   initialName: string;
+  initialDurationWeeks: number | null;
   initialStartsOn: string | null;
   mesocycleStatus: "draft" | "active" | "archived";
 }) {
@@ -30,6 +32,10 @@ export function MesocycleEditForm({
     message: "",
     values: {
       name: initialName,
+      durationWeeks:
+        initialDurationWeeks === null
+          ? ""
+          : String(initialDurationWeeks),
       startsOn: initialStartsOn ?? "",
     },
   };
@@ -39,7 +45,7 @@ export function MesocycleEditForm({
     initialState,
   );
 
-  if (mesocycleStatus === "archived") {
+  if (mesocycleStatus !== "draft") {
     return null;
   }
 
@@ -47,6 +53,7 @@ export function MesocycleEditForm({
     <details className="mt-3 rounded-lg border border-blue-100 bg-white/70">
       <summary className="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-xs font-medium text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-500">
         Edit mesocycle
+
         <span aria-hidden="true">+</span>
       </summary>
 
@@ -55,6 +62,7 @@ export function MesocycleEditForm({
         className="space-y-4 border-t border-blue-100 p-3"
       >
         <input type="hidden" name="clientId" value={clientId} />
+
         <input
           type="hidden"
           name="mesocycleId"
@@ -79,9 +87,43 @@ export function MesocycleEditForm({
               type="text"
               required
               maxLength={100}
-              defaultValue={state.values?.name ?? initialName}
+              defaultValue={
+                state.values?.name ?? initialName
+              }
               className={inputClass}
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor={`mesocycle-duration-${mesocycleId}`}
+              className={labelClass}
+            >
+              Duration in weeks
+            </label>
+
+            <input
+              id={`mesocycle-duration-${mesocycleId}`}
+              name="durationWeeks"
+              type="number"
+              min={1}
+              max={52}
+              step={1}
+              required
+              inputMode="numeric"
+              defaultValue={
+                state.values?.durationWeeks ??
+                (initialDurationWeeks === null
+                  ? ""
+                  : String(initialDurationWeeks))
+              }
+              className={inputClass}
+            />
+
+            <p className="mt-2 text-xs leading-relaxed text-muted">
+              Every training template assigned to this mesocycle
+              must use the same duration.
+            </p>
           </div>
 
           <div>
@@ -91,7 +133,7 @@ export function MesocycleEditForm({
             >
               Start date{" "}
               <span className="font-normal text-muted">
-                (optional)
+                (optional while drafting)
               </span>
             </label>
 
@@ -100,10 +142,17 @@ export function MesocycleEditForm({
               name="startsOn"
               type="date"
               defaultValue={
-                state.values?.startsOn ?? initialStartsOn ?? ""
+                state.values?.startsOn ??
+                initialStartsOn ??
+                ""
               }
               className={inputClass}
             />
+
+            <p className="mt-2 text-xs leading-relaxed text-muted">
+              A start date is required before this mesocycle can be
+              activated.
+            </p>
           </div>
 
           <button
@@ -125,7 +174,10 @@ export function MesocycleEditForm({
         )}
 
         {state.status === "success" && (
-          <p role="status" className="text-xs text-blue-700">
+          <p
+            role="status"
+            className="text-xs text-blue-700"
+          >
             {state.message}
           </p>
         )}

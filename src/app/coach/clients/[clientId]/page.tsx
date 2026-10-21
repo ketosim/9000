@@ -9,12 +9,15 @@ import {
   type AssignableTemplate,
 } from "./template-assignment-form";
 import { TemplateUnassignForm } from "./template-unassign-form";
+import { TrainingStatusControls } from "./training-status-controls";
 
 type ClientDetailPageProps = {
   params: Promise<{
     clientId: string;
   }>;
 };
+
+type TrainingStatus = "draft" | "active" | "archived";
 
 type AssignedTemplate = {
   id: string;
@@ -30,7 +33,7 @@ type ClientMesocycle = {
   name: string;
   position: number;
   duration_weeks: number | null;
-  status: "draft" | "active" | "archived";
+  status: TrainingStatus;
   starts_on: string | null;
   assigned_training_templates: AssignedTemplate[];
 };
@@ -40,7 +43,7 @@ type TrainingBlock = {
   name: string;
   description: string;
   position: number;
-  status: "draft" | "active" | "archived";
+  status: TrainingStatus;
   starts_on: string | null;
   client_mesocycles: ClientMesocycle[];
 };
@@ -59,6 +62,18 @@ function formatDate(value: string | null) {
     year: "numeric",
     timeZone: "Australia/Sydney",
   }).format(new Date(value));
+}
+
+function statusClass(status: TrainingStatus) {
+  if (status === "active") {
+    return "border-green-200 bg-green-50 text-green-800";
+  }
+
+  if (status === "archived") {
+    return "border-slate-200 bg-slate-100 text-slate-600";
+  }
+
+  return "border-blue-200 bg-blue-50 text-blue-800";
 }
 
 export default async function ClientDetailPage({
@@ -146,9 +161,7 @@ export default async function ClientDetailPage({
   }
 
   const client = clientResult.data;
-
   const blocks = (blocksResult.data ?? []) as TrainingBlock[];
-
   const activeTemplates = (templatesResult.data ??
     []) as AssignableTemplate[];
 
@@ -293,7 +306,11 @@ export default async function ClientDetailPage({
                           )}
                         </div>
 
-                        <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs capitalize text-blue-800">
+                        <span
+                          className={`rounded-full border px-3 py-1 text-xs capitalize ${statusClass(
+                            block.status,
+                          )}`}
+                        >
                           {block.status}
                         </span>
                       </div>
@@ -320,144 +337,213 @@ export default async function ClientDetailPage({
                         </div>
                       </dl>
 
-                      <TrainingBlockEditForm
+                      <TrainingStatusControls
                         clientId={clientId}
-                        blockId={block.id}
-                        initialName={block.name}
-                        initialDescription={block.description}
-                        initialStartsOn={block.starts_on}
-                        initialMesocycleCount={mesocycles.length}
-                        blockStatus={block.status}
+                        itemId={block.id}
+                        status={block.status}
+                        kind="block"
                       />
+
+                      {block.status === "draft" && (
+                        <TrainingBlockEditForm
+                          clientId={clientId}
+                          blockId={block.id}
+                          initialName={block.name}
+                          initialDescription={block.description}
+                          initialStartsOn={block.starts_on}
+                          initialMesocycleCount={
+                            mesocycles.length
+                          }
+                          blockStatus={block.status}
+                        />
+                      )}
                     </header>
 
-                    <div className="grid gap-4 p-5 sm:p-6 lg:grid-cols-3">
-                      {mesocycles.map((mesocycle) => {
-                        const assignments = [
-                          ...mesocycle.assigned_training_templates,
-                        ].sort(
-                          (first, second) =>
-                            first.position - second.position,
-                        );
-
-                        const assignedProgramIds = new Set(
-                          assignments.flatMap((assignment) =>
-                            assignment.source_program_id
-                              ? [assignment.source_program_id]
-                              : [],
-                          ),
-                        );
-
-                        const compatibleTemplates =
-                          activeTemplates.filter(
-                            (template) =>
-                              !assignedProgramIds.has(template.id) &&
-                              (mesocycle.duration_weeks === null ||
-                                template.duration_weeks ===
-                                  mesocycle.duration_weeks),
+                    {mesocycles.length === 0 ? (
+                      <div className="p-5 sm:p-6">
+                        <p className="rounded-xl border border-dashed border-blue-200 bg-blue-50/60 p-4 text-sm text-muted">
+                          This training block has no mesocycles.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4 p-5 sm:p-6 lg:grid-cols-3">
+                        {mesocycles.map((mesocycle) => {
+                          const assignments = [
+                            ...mesocycle.assigned_training_templates,
+                          ].sort(
+                            (first, second) =>
+                              first.position -
+                              second.position,
                           );
 
-                        return (
-                          <section
-                            key={mesocycle.id}
-                            className="min-w-0 rounded-xl border border-blue-100 bg-blue-50/60 p-4"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-xs font-medium uppercase tracking-[0.12em] text-blue-700">
-                                  Position {mesocycle.position}
-                                </p>
+                          const assignedProgramIds = new Set(
+                            assignments.flatMap((assignment) =>
+                              assignment.source_program_id
+                                ? [
+                                    assignment.source_program_id,
+                                  ]
+                                : [],
+                            ),
+                          );
 
-                                <h4 className="mt-1 break-words font-semibold">
-                                  {mesocycle.name}
-                                </h4>
+                          const compatibleTemplates =
+                            activeTemplates.filter(
+                              (template) =>
+                                !assignedProgramIds.has(
+                                  template.id,
+                                ) &&
+                                (mesocycle.duration_weeks ===
+                                  null ||
+                                  template.duration_weeks ===
+                                    mesocycle.duration_weeks),
+                            );
+
+                          return (
+                            <section
+                              key={mesocycle.id}
+                              className="min-w-0 rounded-xl border border-blue-100 bg-blue-50/60 p-4"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-blue-700">
+                                    Position{" "}
+                                    {mesocycle.position}
+                                  </p>
+
+                                  <h4 className="mt-1 break-words font-semibold">
+                                    {mesocycle.name}
+                                  </h4>
+                                </div>
+
+                                <span
+                                  className={`rounded-full border px-2 py-1 text-[11px] capitalize ${statusClass(
+                                    mesocycle.status,
+                                  )}`}
+                                >
+                                  {mesocycle.status}
+                                </span>
                               </div>
 
-                              <span className="rounded-full bg-white px-2 py-1 text-[11px] capitalize text-muted">
-                                {mesocycle.status}
-                              </span>
-                            </div>
+                              <dl className="mt-3 space-y-1 text-xs text-muted">
+                                <div className="flex gap-1">
+                                  <dt>Duration:</dt>
+                                  <dd>
+                                    {mesocycle.duration_weeks
+                                      ? `${mesocycle.duration_weeks} weeks`
+                                      : "Not set"}
+                                  </dd>
+                                </div>
 
-                            <p className="mt-3 text-xs text-muted">
-                              {mesocycle.duration_weeks
-                                ? `${mesocycle.duration_weeks} weeks`
-                                : "Duration set by first template"}
-                            </p>
-
-                            <p className="mt-1 text-xs text-muted">
-                              Starts:{" "}
-                              {formatDate(mesocycle.starts_on)}
-                            </p>
-
-                            <MesocycleEditForm
-                              clientId={clientId}
-                              mesocycleId={mesocycle.id}
-                              initialName={mesocycle.name}
-                              initialStartsOn={mesocycle.starts_on}
-                              mesocycleStatus={mesocycle.status}
-                            />
-
-                            {assignments.length === 0 ? (
-                              <div className="mt-4 rounded-lg border border-dashed border-blue-200 bg-white/70 p-3">
-                                <p className="text-sm text-muted">
-                                  No templates assigned
-                                </p>
-                              </div>
-                            ) : (
-                              <ul className="mt-4 space-y-2">
-                                {assignments.map((assignment) => (
-                                  <li
-                                    key={assignment.id}
-                                    className="rounded-lg border border-blue-100 bg-white p-3"
-                                  >
-                                    <p className="break-words text-sm font-medium">
-                                      {assignment.template_name}
-                                    </p>
-
-                                    <p className="mt-1 text-xs text-muted">
-                                      {assignment.duration_weeks}{" "}
-                                      weeks ·{" "}
-                                      {
-                                        assignment.sessions_per_week
-                                      }{" "}
-                                      {assignment.sessions_per_week ===
-                                      1
-                                        ? "workout"
-                                        : "workouts"}{" "}
-                                      per week
-                                    </p>
-
-                                    {mesocycle.status === "draft" && (
-                                      <TemplateUnassignForm
-                                        clientId={clientId}
-                                        assignmentId={assignment.id}
-                                        templateName={
-                                          assignment.template_name
-                                        }
-                                        durationWeeks={
-                                          assignment.duration_weeks
-                                        }
-                                      />
+                                <div className="flex gap-1">
+                                  <dt>Starts:</dt>
+                                  <dd>
+                                    {formatDate(
+                                      mesocycle.starts_on,
                                     )}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
+                                  </dd>
+                                </div>
 
-                            {mesocycle.status === "draft" && (
-                              <TemplateAssignmentForm
+                                <div className="flex gap-1">
+                                  <dt>Templates:</dt>
+                                  <dd>
+                                    {assignments.length}
+                                  </dd>
+                                </div>
+                              </dl>
+
+                              <TrainingStatusControls
                                 clientId={clientId}
-                                mesocycleId={mesocycle.id}
-                                durationWeeks={
-                                  mesocycle.duration_weeks
-                                }
-                                templates={compatibleTemplates}
+                                itemId={mesocycle.id}
+                                status={mesocycle.status}
+                                kind="mesocycle"
                               />
-                            )}
-                          </section>
-                        );
-                      })}
-                    </div>
+
+                              {mesocycle.status === "draft" && (
+                                <MesocycleEditForm
+                                  clientId={clientId}
+                                  mesocycleId={mesocycle.id}
+                                  initialName={mesocycle.name}
+                                  initialDurationWeeks={mesocycle.duration_weeks}
+                                  initialStartsOn={mesocycle.starts_on}
+                                  mesocycleStatus={mesocycle.status}
+                                />
+                              )}
+
+                              {assignments.length === 0 ? (
+                                <div className="mt-4 rounded-lg border border-dashed border-blue-200 bg-white/70 p-3">
+                                  <p className="text-sm text-muted">
+                                    No templates assigned
+                                  </p>
+                                </div>
+                              ) : (
+                                <ul className="mt-4 space-y-2">
+                                  {assignments.map(
+                                    (assignment) => (
+                                      <li
+                                        key={assignment.id}
+                                        className="rounded-lg border border-blue-100 bg-white p-3"
+                                      >
+                                        <p className="break-words text-sm font-medium">
+                                          {
+                                            assignment.template_name
+                                          }
+                                        </p>
+
+                                        <p className="mt-1 text-xs text-muted">
+                                          {
+                                            assignment.duration_weeks
+                                          }{" "}
+                                          weeks ·{" "}
+                                          {
+                                            assignment.sessions_per_week
+                                          }{" "}
+                                          {assignment.sessions_per_week ===
+                                          1
+                                            ? "workout"
+                                            : "workouts"}{" "}
+                                          per week
+                                        </p>
+
+                                        {mesocycle.status ===
+                                          "draft" && (
+                                          <TemplateUnassignForm
+                                            clientId={
+                                              clientId
+                                            }
+                                            assignmentId={
+                                              assignment.id
+                                            }
+                                            templateName={
+                                              assignment.template_name
+                                            }
+                                            durationWeeks={
+                                              assignment.duration_weeks
+                                            }
+                                          />
+                                        )}
+                                      </li>
+                                    ),
+                                  )}
+                                </ul>
+                              )}
+
+                              {mesocycle.status === "draft" && (
+                                <TemplateAssignmentForm
+                                  clientId={clientId}
+                                  mesocycleId={mesocycle.id}
+                                  durationWeeks={
+                                    mesocycle.duration_weeks
+                                  }
+                                  templates={
+                                    compatibleTemplates
+                                  }
+                                />
+                              )}
+                            </section>
+                          );
+                        })}
+                      </div>
+                    )}
                   </article>
                 );
               })}
