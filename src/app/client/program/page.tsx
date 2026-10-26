@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 type AssignedWorkout = {
@@ -395,32 +396,45 @@ export default async function ClientProgramPage() {
                                 No workouts scheduled.
                               </p>
                             ) : (
-                              <ol className="space-y-2">
+                              <div className="space-y-2">
                                 {week.workouts.map((workout) => (
-                                  <li
+                                  <Link
                                     key={workout.id}
-                                    className="rounded-lg border border-blue-100 bg-blue-50/50 p-4"
+                                    href={`/client/program/workouts/${workout.id}`}
+                                    className="block rounded-lg border border-blue-100 bg-blue-50/50 p-4 transition hover:border-blue-300 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:scale-[0.99]"
                                   >
                                     <div className="flex items-center justify-between gap-4">
                                       <span className="font-semibold">
                                         Workout {workout.position}
                                       </span>
 
-                                      {workout.estimatedMinutes && (
-                                        <span className="text-xs text-muted">
-                                          {workout.estimatedMinutes} min
+                                      <div className="flex items-center gap-3">
+                                        {workout.estimatedMinutes && (
+                                          <span className="text-xs text-muted">
+                                            {
+                                              workout.estimatedMinutes
+                                            }{" "}
+                                            min
+                                          </span>
+                                        )}
+
+                                        <span
+                                          aria-hidden="true"
+                                          className="text-blue-700"
+                                        >
+                                          ›
                                         </span>
-                                      )}
+                                      </div>
                                     </div>
 
                                     {workout.warmupNotes && (
-                                      <p className="mt-2 whitespace-pre-line text-sm text-muted">
+                                      <p className="mt-2 line-clamp-2 whitespace-pre-line text-sm text-muted">
                                         {workout.warmupNotes}
                                       </p>
                                     )}
-                                  </li>
+                                  </Link>
                                 ))}
-                              </ol>
+                              </div>
                             )}
                           </div>
                         </details>
