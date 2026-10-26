@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { MobileSetList } from "../mobile-set-list";
 
 type PrescribedSet = {
   id: string;
@@ -71,42 +72,6 @@ type PageProps = {
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function formatReps(set: PrescribedSet) {
-  if (set.repsMin === set.repsMax) {
-    return String(set.repsMin);
-  }
-
-  return `${set.repsMin}–${set.repsMax}`;
-}
-
-function formatLoad(
-  set: PrescribedSet,
-  exercise: AssignedExercise,
-) {
-  if (set.targetLoad === null) {
-    return "—";
-  }
-
-  return `${set.targetLoad} ${exercise.loadUnit}`;
-}
-
-function formatRest(seconds: number | null) {
-  if (seconds === null) {
-    return "—";
-  }
-
-  if (seconds < 60) {
-    return `${seconds} sec`;
-  }
-
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-
-  return remainingSeconds
-    ? `${minutes} min ${remainingSeconds} sec`
-    : `${minutes} min`;
-}
-
 function formatLabel(value: string) {
   return value
     .replaceAll("_", " ")
@@ -146,7 +111,7 @@ export default async function ClientWorkoutPage({
 
   return (
     <main className="hal-grid min-h-dvh bg-background text-foreground">
-      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto w-full max-w-xl px-4 pb-28 pt-4 sm:px-6 sm:pt-6">
         <Link
           href="/client/program"
           className="inline-flex min-h-11 items-center rounded-lg text-sm text-muted transition hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-500"
@@ -154,81 +119,78 @@ export default async function ClientWorkoutPage({
           ← Back to training plan
         </Link>
 
-        <header className="mt-7">
-          <p className="text-xs uppercase tracking-[0.2em] text-blue-700">
+        <header className="mt-5">
+          <p className="break-words text-xs uppercase tracking-[0.16em] text-blue-700">
             {workout.template.name} · Week{" "}
             {workout.week.weekNumber}
           </p>
 
-          <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-4xl font-semibold tracking-tight">
-                Workout {workout.position}
-              </h1>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+            Workout {workout.position}
+          </h1>
 
-              <p className="mt-3 text-sm text-muted">
-                {workout.block.name} · {workout.mesocycle.name}
-              </p>
-            </div>
+          <p className="mt-2 break-words text-sm text-muted">
+            {workout.block.name} · {workout.mesocycle.name}
+          </p>
 
+          <div className="mt-4 flex flex-wrap gap-2">
             {workout.estimatedMinutes && (
-              <span className="rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-800">
+              <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-800">
                 Approximately {workout.estimatedMinutes} min
               </span>
             )}
-          </div>
 
-          {workout.week.focus && (
-            <p className="mt-5 text-sm font-medium text-foreground">
-              Week focus: {workout.week.focus}
-            </p>
-          )}
+            {workout.week.focus && (
+              <span className="rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs text-blue-800">
+                {workout.week.focus}
+              </span>
+            )}
+          </div>
         </header>
 
         {(workout.warmupNotes ||
           workout.week.coachingNotes) && (
-          <section
-            className="hal-panel mt-8 rounded-2xl p-5 sm:p-6"
-            aria-labelledby="preparation-heading"
-          >
-            <h2
-              id="preparation-heading"
-              className="text-xl font-semibold"
-            >
+          <details className="hal-panel mt-6 rounded-2xl">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3 font-semibold focus-visible:outline-2 focus-visible:outline-blue-500">
               Before you start
-            </h2>
+              <span aria-hidden="true" className="text-blue-700">
+                +
+              </span>
+            </summary>
 
-            {workout.week.coachingNotes && (
-              <div className="mt-4">
-                <h3 className="text-xs uppercase tracking-[0.12em] text-muted">
-                  Coach&apos;s weekly notes
-                </h3>
+            <div className="space-y-5 border-t border-blue-100 p-4">
+              {workout.week.coachingNotes && (
+                <div>
+                  <h2 className="text-xs uppercase tracking-[0.12em] text-muted">
+                    Coach&apos;s weekly notes
+                  </h2>
 
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
-                  {workout.week.coachingNotes}
-                </p>
-              </div>
-            )}
+                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
+                    {workout.week.coachingNotes}
+                  </p>
+                </div>
+              )}
 
-            {workout.warmupNotes && (
-              <div className="mt-4">
-                <h3 className="text-xs uppercase tracking-[0.12em] text-muted">
-                  Warm-up
-                </h3>
+              {workout.warmupNotes && (
+                <div>
+                  <h2 className="text-xs uppercase tracking-[0.12em] text-muted">
+                    Warm-up
+                  </h2>
 
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
-                  {workout.warmupNotes}
-                </p>
-              </div>
-            )}
-          </section>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
+                    {workout.warmupNotes}
+                  </p>
+                </div>
+              )}
+            </div>
+          </details>
         )}
 
         <section
-          className="mt-10"
+          className="mt-8"
           aria-labelledby="exercises-heading"
         >
-          <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex items-end justify-between gap-3">
             <h2
               id="exercises-heading"
               className="text-2xl font-semibold"
@@ -236,22 +198,19 @@ export default async function ClientWorkoutPage({
               Exercises
             </h2>
 
-            <span className="text-sm text-muted">
-              {workout.exercises.length}{" "}
-              {workout.exercises.length === 1
-                ? "exercise"
-                : "exercises"}
+            <span className="shrink-0 text-sm text-muted">
+              {workout.exercises.length}
             </span>
           </div>
 
           {workout.exercises.length === 0 ? (
-            <div className="hal-panel mt-5 rounded-2xl p-6">
+            <div className="hal-panel mt-4 rounded-2xl p-5">
               <p className="text-sm text-muted">
                 No exercises have been prescribed for this workout.
               </p>
             </div>
           ) : (
-            <div className="mt-5 space-y-5">
+            <div className="mt-4 space-y-5">
               {workout.exercises.map((exercise) => {
                 const details = [
                   ["Variation", exercise.variation],
@@ -279,13 +238,20 @@ export default async function ClientWorkoutPage({
                   ],
                 ].filter(([, value]) => Boolean(value));
 
+                const hasInstructions = Boolean(
+                  details.length ||
+                    exercise.setupInstructions ||
+                    exercise.coachingCues ||
+                    exercise.coachNotes,
+                );
+
                 return (
                   <article
                     key={exercise.id}
                     className="hal-panel overflow-hidden rounded-2xl"
                   >
-                    <header className="p-5 sm:p-6">
-                      <div className="flex items-start gap-4">
+                    <header className="p-4">
+                      <div className="flex items-start gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 font-mono text-sm font-semibold text-blue-800">
                           {String(exercise.position).padStart(
                             2,
@@ -295,7 +261,7 @@ export default async function ClientWorkoutPage({
 
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="break-words text-xl font-semibold">
+                            <h3 className="break-words text-lg font-semibold">
                               {exercise.name}
                             </h3>
 
@@ -316,8 +282,8 @@ export default async function ClientWorkoutPage({
                       </div>
 
                       {exercise.personalisationNotes && (
-                        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue-800">
+                        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-800">
                             Personalised instruction
                           </p>
 
@@ -326,143 +292,76 @@ export default async function ClientWorkoutPage({
                           </p>
                         </div>
                       )}
-
-                      {details.length > 0 && (
-                        <dl className="mt-5 grid gap-3 sm:grid-cols-2">
-                          {details.map(([label, value]) => (
-                            <div
-                              key={label}
-                              className="rounded-lg border border-blue-100 bg-white p-3"
-                            >
-                              <dt className="text-xs uppercase tracking-[0.1em] text-muted">
-                                {label}
-                              </dt>
-                              <dd className="mt-1 break-words text-sm">
-                                {value}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      )}
-
-                      {exercise.setupInstructions && (
-                        <div className="mt-5">
-                          <h4 className="text-xs uppercase tracking-[0.12em] text-muted">
-                            Setup
-                          </h4>
-
-                          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
-                            {exercise.setupInstructions}
-                          </p>
-                        </div>
-                      )}
-
-                      {exercise.coachingCues && (
-                        <div className="mt-5">
-                          <h4 className="text-xs uppercase tracking-[0.12em] text-muted">
-                            Coaching cues
-                          </h4>
-
-                          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
-                            {exercise.coachingCues}
-                          </p>
-                        </div>
-                      )}
                     </header>
 
-                    <div className="overflow-x-auto border-t border-blue-100">
-                      <table className="w-full min-w-[650px] text-left text-sm tabular-nums">
-                        <caption className="sr-only">
-                          Prescribed sets for {exercise.name}
-                        </caption>
+                    <MobileSetList
+                      sets={exercise.sets}
+                      loadUnit={exercise.loadUnit}
+                    />
 
-                        <thead className="bg-blue-50/70 text-xs uppercase tracking-[0.08em] text-muted">
-                          <tr>
-                            <th className="px-4 py-3 font-medium">
-                              Set
-                            </th>
-                            <th className="px-4 py-3 font-medium">
-                              Type
-                            </th>
-                            <th className="px-4 py-3 font-medium">
-                              Reps
-                            </th>
-                            <th className="px-4 py-3 font-medium">
-                              Load
-                            </th>
-                            <th className="px-4 py-3 font-medium">
-                              RIR
-                            </th>
-                            <th className="px-4 py-3 font-medium">
-                              Rest
-                            </th>
-                          </tr>
-                        </thead>
+                    {hasInstructions && (
+                      <details className="border-t border-blue-100">
+                        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-500">
+                          Exercise details
+                          <span aria-hidden="true">+</span>
+                        </summary>
 
-                        <tbody className="divide-y divide-blue-100">
-                          {exercise.sets.map((set) => (
-                            <tr key={set.id}>
-                              <td className="px-4 py-3 font-semibold">
-                                {set.setNumber}
-                              </td>
-                              <td className="px-4 py-3">
-                                {formatLabel(set.setType)}
-                              </td>
-                              <td className="px-4 py-3">
-                                {formatReps(set)}
-                              </td>
-                              <td className="px-4 py-3">
-                                {formatLoad(set, exercise)}
-                              </td>
-                              <td className="px-4 py-3">
-                                {set.rir ?? "—"}
-                              </td>
-                              <td className="px-4 py-3">
-                                {formatRest(set.restSeconds)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                        <div className="space-y-5 border-t border-blue-100 p-4">
+                          {details.length > 0 && (
+                            <dl className="grid gap-3">
+                              {details.map(([label, value]) => (
+                                <div
+                                  key={label}
+                                  className="rounded-lg border border-blue-100 bg-white p-3"
+                                >
+                                  <dt className="text-xs uppercase tracking-[0.08em] text-muted">
+                                    {label}
+                                  </dt>
+                                  <dd className="mt-1 break-words text-sm">
+                                    {value}
+                                  </dd>
+                                </div>
+                              ))}
+                            </dl>
+                          )}
 
-                    {exercise.sets.some(
-                      (set) =>
-                        set.notes || set.sideOverride,
-                    ) && (
-                      <div className="space-y-2 border-t border-blue-100 p-5 text-sm">
-                        {exercise.sets
-                          .filter(
-                            (set) =>
-                              set.notes ||
-                              set.sideOverride,
-                          )
-                          .map((set) => (
-                            <p key={set.id}>
-                              <span className="font-semibold">
-                                Set {set.setNumber}:
-                              </span>{" "}
-                              {set.sideOverride
-                                ? `${formatLabel(
-                                    set.sideOverride,
-                                  )}${set.notes ? " · " : ""}`
-                                : ""}
-                              {set.notes}
-                            </p>
-                          ))}
-                      </div>
-                    )}
+                          {exercise.setupInstructions && (
+                            <div>
+                              <h4 className="text-xs uppercase tracking-[0.1em] text-muted">
+                                Setup
+                              </h4>
 
-                    {exercise.coachNotes && (
-                      <div className="border-t border-blue-100 p-5">
-                        <h4 className="text-xs uppercase tracking-[0.12em] text-muted">
-                          Coach notes
-                        </h4>
+                              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
+                                {exercise.setupInstructions}
+                              </p>
+                            </div>
+                          )}
 
-                        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
-                          {exercise.coachNotes}
-                        </p>
-                      </div>
+                          {exercise.coachingCues && (
+                            <div>
+                              <h4 className="text-xs uppercase tracking-[0.1em] text-muted">
+                                Coaching cues
+                              </h4>
+
+                              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
+                                {exercise.coachingCues}
+                              </p>
+                            </div>
+                          )}
+
+                          {exercise.coachNotes && (
+                            <div>
+                              <h4 className="text-xs uppercase tracking-[0.1em] text-muted">
+                                Coach notes
+                              </h4>
+
+                              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">
+                                {exercise.coachNotes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </details>
                     )}
                   </article>
                 );
