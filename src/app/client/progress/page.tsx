@@ -64,7 +64,7 @@ export default function ClientProgressPage() {
               <p className="text-xs uppercase tracking-[0.18em] text-hal-red-bright">
                 Weekly volume
               </p>
-              <h2 className="mt-2 text-2xl font-semibold">Working sets</h2>
+              <h2 className="mt-2 text-2xl font-semibold">Work sets</h2>
             </div>
 
             <p className="text-sm text-muted">Last 6 weeks</p>

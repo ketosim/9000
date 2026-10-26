@@ -5,7 +5,7 @@ export const sideOptions = [
   { value: "each_side", label: "Each side separately" },
 ];
 export const setOptions = [
-  { value: "working", label: "Working" },
+  { value: "working", label: "Work" },
   { value: "warmup", label: "Warm-up" },
   { value: "top", label: "Top set" },
   { value: "backoff", label: "Back-off" },
@@ -85,7 +85,7 @@ export const createExerciseFields: Field[] = [
   exerciseFields[0],
   {
     name: "working_sets",
-    label: "Working sets",
+    label: "Work sets",
     type: "number",
     required: true,
     min: 1,
