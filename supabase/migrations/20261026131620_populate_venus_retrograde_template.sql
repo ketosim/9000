@@ -1,109 +1,134 @@
 begin;
 
--- Use the coach who owns the existing template library.
-create temporary table venus_coach
+-- Find the empty template created through the coach interface.
+create temporary table target_program
 on commit drop
 as
-select programs.created_by as id
+select
+  programs.id,
+  programs.created_by,
+  programs.duration_weeks,
+  programs.sessions_per_week
 from public.programs
-group by programs.created_by
-order by count(*) desc
-limit 1;
+where lower(btrim(programs.name)) =
+  lower('Venus Retrograde');
 
+
+-- Confirm that it is safe to populate.
 do $$
 declare
-  v_coach_count integer;
-  v_existing_count integer;
+  v_program_count integer;
+  v_week_count integer;
+  v_workout_count integer;
+  v_exercise_count integer;
 begin
   select count(*)
-  into v_coach_count
-  from venus_coach;
+  into v_program_count
+  from target_program;
 
-  if v_coach_count <> 1 then
+  if v_program_count <> 1 then
     raise exception
-      'Expected one coach-owned template library.';
+      'Expected exactly one Venus Retrograde template, but found %.',
+      v_program_count;
+  end if;
+
+  if exists (
+    select 1
+    from target_program
+    where duration_weeks <> 5
+       or sessions_per_week <> 3
+  ) then
+    raise exception
+      'Venus Retrograde must contain five weeks and three workouts per week.';
   end if;
 
   select count(*)
-  into v_existing_count
-  from public.programs
-  join venus_coach
-    on venus_coach.id = programs.created_by
-  where lower(btrim(programs.name)) =
-    lower('Venus Retrograde');
+  into v_week_count
+  from public.program_weeks
+  join target_program
+    on target_program.id = program_weeks.program_id;
 
-  if v_existing_count > 0 then
+  if v_week_count <> 5 then
     raise exception
-      'Venus Retrograde already exists. No data was changed.';
+      'Expected 5 existing weeks, but found %.',
+      v_week_count;
+  end if;
+
+  select count(*)
+  into v_workout_count
+  from public.program_workouts
+  join public.program_weeks
+    on program_weeks.id = program_workouts.week_id
+  join target_program
+    on target_program.id = program_weeks.program_id;
+
+  if v_workout_count <> 15 then
+    raise exception
+      'Expected 15 existing workouts, but found %.',
+      v_workout_count;
   end if;
 end;
 $$;
 
+-- Replace any incomplete exercise data already entered in this draft.
+-- Prescribed sets are removed first so this works independently of the
+-- program_sets foreign-key deletion configuration.
+delete from public.program_sets
+using
+  public.program_exercises,
+  public.program_workouts,
+  public.program_weeks,
+  target_program
+where program_sets.exercise_id =
+    program_exercises.id
+  and program_exercises.workout_id =
+    program_workouts.id
+  and program_workouts.week_id =
+    program_weeks.id
+  and program_weeks.program_id =
+    target_program.id;
 
--- Create the reusable template.
-create temporary table venus_program (
-  id uuid primary key,
-  duration_weeks integer not null,
-  sessions_per_week integer not null
-) on commit drop;
+delete from public.program_exercises
+using
+  public.program_workouts,
+  public.program_weeks,
+  target_program
+where program_exercises.workout_id =
+    program_workouts.id
+  and program_workouts.week_id =
+    program_weeks.id
+  and program_weeks.program_id =
+    target_program.id;
 
-insert into venus_program (
-  id,
-  duration_weeks,
-  sessions_per_week
-)
-values (
-  gen_random_uuid(),
-  5,
-  3
+
+-- Standardise the name and finish the template metadata.
+update public.programs
+set
+  name = 'Venus Retrograde',
+  goal =
+    'Build balanced full-body strength and muscle across the glutes, legs, chest, back, shoulders and arms.',
+  description =
+    'A three-day full-body training template. Every session combines upper- and lower-body work. Priority movements include hip thrusts, leg press, chest press, push-ups, lateral raises and direct arm work. Week 5 reduces volume for recovery.',
+  status = 'active',
+  template_version = 2,
+  template_revision = template_revision + 1
+where id = (
+  select id
+  from target_program
 );
 
-insert into public.programs (
-  id,
-  name,
-  goal,
-  description,
-  duration_weeks,
-  sessions_per_week,
-  status,
-  created_by,
-  template_version,
-  template_revision
-)
-select
-  venus_program.id,
-  'Venus Retrograde',
-  'Build balanced full-body strength and muscle across the glutes, legs, chest, back, shoulders and arms.',
-  'A three-day full-body training template. Every session combines upper- and lower-body work. Priority movements include hip thrusts, leg press, chest press, push-ups, lateral raises and direct arm work. Week 5 reduces volume for recovery.',
-  venus_program.duration_weeks,
-  venus_program.sessions_per_week,
-  'active',
-  venus_coach.id,
-  2,
-  1
-from venus_program
-cross join venus_coach;
 
-
--- Generate five weeks. Week 5 is the deload.
-insert into public.program_weeks (
-  program_id,
-  week_number,
-  focus,
-  coaching_notes,
-  is_deload
-)
-select
-  venus_program.id,
-  week_number,
-  case week_number
+-- Add the five-week training structure.
+update public.program_weeks
+set
+  focus = case week_number
     when 1 then 'Technique and baseline effort'
     when 2 then 'Build consistent working volume'
     when 3 then 'Progress repetitions or load'
     when 4 then 'Strongest productive training week'
     when 5 then 'Reduced-volume deload'
   end,
-  case week_number
+  coaching_notes = case week_number
     when 1 then
       'Choose conservative starting loads and finish most sets with approximately three repetitions in reserve.'
     when 2 then
@@ -115,74 +140,41 @@ select
     when 5 then
       'Use lighter loads, fewer sets and approximately four repetitions in reserve.'
   end,
-  week_number = 5
-from venus_program
-cross join generate_series(1, 5) as week_number;
+  is_deload = week_number = 5
+where program_id = (
+  select id
+  from target_program
+);
 
 
--- Shared workout keys link corresponding workouts between weeks.
-create temporary table venus_workout_keys (
-  workout_position integer primary key,
-  progression_key uuid not null,
-  workout_name text not null,
-  warmup_notes text not null,
-  estimated_minutes integer not null
-) on commit drop;
-
-insert into venus_workout_keys (
-  workout_position,
-  progression_key,
-  workout_name,
-  warmup_notes,
-  estimated_minutes
-)
-values
-  (
-    1,
-    gen_random_uuid(),
-    'Full Body A',
-    'Complete 5–8 minutes of easy movement, then perform progressive warm-up sets for the chest press, hip thrust and leg press.',
-    75
-  ),
-  (
-    2,
-    gen_random_uuid(),
-    'Full Body B',
-    'Complete 5–8 minutes of easy movement, then perform progressive warm-up sets for the Romanian deadlift and upper-body pulling movements.',
-    85
-  ),
-  (
-    3,
-    gen_random_uuid(),
-    'Full Body C',
-    'Complete 5–8 minutes of easy movement, then perform progressive warm-up sets for the chest press, hip thrust and leg press.',
-    80
-  );
-
-insert into public.program_workouts (
-  week_id,
-  name,
-  position,
-  warmup_notes,
-  estimated_minutes,
-  progression_key
-)
-select
-  program_week.id,
-  workout_key.workout_name,
-  workout_key.workout_position,
-  workout_key.warmup_notes,
-  workout_key.estimated_minutes,
-  workout_key.progression_key
-from public.program_weeks as program_week
-join venus_program
-  on venus_program.id = program_week.program_id
-cross join venus_workout_keys as workout_key;
+-- Give the three workouts descriptive names.
+update public.program_workouts
+set
+  name = case position
+    when 1 then 'Full Body A'
+    when 2 then 'Full Body B'
+    when 3 then 'Full Body C'
+  end,
+  warmup_notes = case position
+    when 1 then
+      'Complete 5–8 minutes of easy movement, then perform progressive warm-up sets for the chest press, hip thrust and leg press.'
+    when 2 then
+      'Complete 5–8 minutes of easy movement, then perform progressive warm-up sets for the Romanian deadlift and upper-body pulling movements.'
+    when 3 then
+      'Complete 5–8 minutes of easy movement, then perform progressive warm-up sets for the chest press, hip thrust and leg press.'
+  end,
+  estimated_minutes = case position
+    when 1 then 75
+    when 2 then 85
+    when 3 then 80
+  end
+from public.program_weeks
+join target_program
+  on target_program.id = program_weeks.program_id
+where program_workouts.week_id = program_weeks.id;
 
 
--- Each row describes one exercise slot. Its progression key remains the same
--- across all five weeks.
-create temporary table venus_exercise_specifications (
+create temporary table exercise_specifications (
   progression_key uuid primary key,
   workout_position integer not null,
   exercise_position integer not null,
@@ -200,7 +192,7 @@ create temporary table venus_exercise_specifications (
 ) on commit drop;
 
 
-insert into venus_exercise_specifications (
+insert into exercise_specifications (
   progression_key,
   workout_position,
   exercise_position,
@@ -516,7 +508,7 @@ values
   );
 
 
--- Copy the exercise structure into every week.
+-- Copy each exercise into the corresponding workout in every week.
 insert into public.program_exercises (
   workout_id,
   name,
@@ -528,7 +520,7 @@ insert into public.program_exercises (
   progression_key
 )
 select
-  workout.id,
+  program_workout.id,
   specification.exercise_name,
   specification.exercise_position,
   specification.side,
@@ -536,16 +528,17 @@ select
   'kg',
   specification.coaching_cues,
   specification.progression_key
-from venus_program
-join public.program_weeks as program_week
-  on program_week.program_id = venus_program.id
-join public.program_workouts as workout
-  on workout.week_id = program_week.id
-join venus_exercise_specifications as specification
-  on specification.workout_position = workout.position;
+from target_program
+join public.program_weeks
+  on program_weeks.program_id = target_program.id
+join public.program_workouts as program_workout
+  on program_workout.week_id = program_weeks.id
+join exercise_specifications as specification
+  on specification.workout_position =
+    program_workout.position;
 
 
--- Weeks 1–4 use the requested volume. Week 5 uses fewer sets and a higher RIR.
+-- Weeks 1–4 use the requested volume. Week 5 uses fewer work sets.
 insert into public.program_sets (
   exercise_id,
   set_number,
@@ -559,7 +552,7 @@ insert into public.program_sets (
   notes
 )
 select
-  exercise.id,
+  program_exercise.id,
   generated_set.set_number,
   'working',
   specification.reps_min,
@@ -580,17 +573,20 @@ select
     else
       ''
   end
-from venus_program
+from target_program
 join public.program_weeks as program_week
-  on program_week.program_id = venus_program.id
-join public.program_workouts as workout
-  on workout.week_id = program_week.id
-join public.program_exercises as exercise
-  on exercise.workout_id = workout.id
-join venus_exercise_specifications as specification
-  on specification.workout_position = workout.position
- and specification.exercise_position = exercise.position
- and specification.progression_key = exercise.progression_key
+  on program_week.program_id = target_program.id
+join public.program_workouts as program_workout
+  on program_workout.week_id = program_week.id
+join public.program_exercises as program_exercise
+  on program_exercise.workout_id = program_workout.id
+join exercise_specifications as specification
+  on specification.workout_position =
+      program_workout.position
+ and specification.exercise_position =
+      program_exercise.position
+ and specification.progression_key =
+      program_exercise.progression_key
 cross join lateral generate_series(
   1,
   case
@@ -602,23 +598,23 @@ cross join lateral generate_series(
 ) as generated_set(set_number);
 
 
--- Validate the complete template before committing.
+-- Verify the completed template before committing.
 do $$
 declare
   v_program_count integer;
   v_week_count integer;
+  v_deload_week_count integer;
   v_workout_count integer;
   v_exercise_count integer;
   v_progression_key_count integer;
   v_set_count integer;
-  v_deload_week_count integer;
   v_loaded_set_count integer;
 begin
   select count(*)
   into v_program_count
   from public.programs
-  join venus_program
-    on venus_program.id = programs.id
+  join target_program
+    on target_program.id = programs.id
   where programs.name = 'Venus Retrograde'
     and programs.status = 'active'
     and programs.duration_weeks = 5
@@ -627,14 +623,14 @@ begin
   select count(*)
   into v_week_count
   from public.program_weeks
-  join venus_program
-    on venus_program.id = program_weeks.program_id;
+  join target_program
+    on target_program.id = program_weeks.program_id;
 
   select count(*)
   into v_deload_week_count
   from public.program_weeks
-  join venus_program
-    on venus_program.id = program_weeks.program_id
+  join target_program
+    on target_program.id = program_weeks.program_id
   where program_weeks.is_deload = true;
 
   select count(*)
@@ -642,8 +638,8 @@ begin
   from public.program_workouts
   join public.program_weeks
     on program_weeks.id = program_workouts.week_id
-  join venus_program
-    on venus_program.id = program_weeks.program_id;
+  join target_program
+    on target_program.id = program_weeks.program_id;
 
   select
     count(*),
@@ -653,11 +649,14 @@ begin
     v_progression_key_count
   from public.program_exercises
   join public.program_workouts
-    on program_workouts.id = program_exercises.workout_id
+    on program_workouts.id =
+      program_exercises.workout_id
   join public.program_weeks
-    on program_weeks.id = program_workouts.week_id
-  join venus_program
-    on venus_program.id = program_weeks.program_id;
+    on program_weeks.id =
+      program_workouts.week_id
+  join target_program
+    on target_program.id =
+      program_weeks.program_id;
 
   select
     count(*),
@@ -669,13 +668,17 @@ begin
     v_loaded_set_count
   from public.program_sets
   join public.program_exercises
-    on program_exercises.id = program_sets.exercise_id
+    on program_exercises.id =
+      program_sets.exercise_id
   join public.program_workouts
-    on program_workouts.id = program_exercises.workout_id
+    on program_workouts.id =
+      program_exercises.workout_id
   join public.program_weeks
-    on program_weeks.id = program_workouts.week_id
-  join venus_program
-    on venus_program.id = program_weeks.program_id;
+    on program_weeks.id =
+      program_workouts.week_id
+  join target_program
+    on target_program.id =
+      program_weeks.program_id;
 
   if v_program_count <> 1 then
     raise exception
